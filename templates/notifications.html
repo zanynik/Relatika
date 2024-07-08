@@ -1,0 +1,59 @@
+{% extends "base.html" %}
+{% block content %}
+<h2>Notifications</h2>
+<h3>Photo Reveal Requests</h3>
+<ul>
+    {% for request in photo_reveals %}
+        <li>
+            {{ request.username }} wants to view your photos.
+            <button class="accept-request" data-request-id="{{ request.request_id }}" data-request-type="photo">Accept</button>
+            <button class="decline-request" data-request-id="{{ request.request_id }}" data-request-type="photo">Decline</button>
+        </li>
+    {% endfor %}
+</ul>
+<h3>Contact Share Requests</h3>
+<ul>
+    {% for request in contact_shares %}
+        <li>
+            {{ request.username }} wants to view your contact details.
+            <button class="accept-request" data-request-id="{{ request.request_id }}" data-request-type="contact">Accept</button>
+            <button class="decline-request" data-request-id="{{ request.request_id }}" data-request-type="contact">Decline</button>
+        </li>
+    {% endfor %}
+</ul>
+<script>
+document.querySelectorAll('.accept-request').forEach(button => {
+    button.addEventListener('click', function() {
+        const requestId = this.getAttribute('data-request-id');
+        const requestType = this.getAttribute('data-request-type');
+        fetch(`/handle_${requestType}_share_request/${requestId}/accept`, {
+            method: 'POST'
+        }).then(response => response.json()).then(data => {
+            if (data.status === 'success') {
+                alert('Request accepted');
+                location.reload();
+            } else {
+                alert('Error accepting request');
+            }
+        });
+    });
+});
+
+document.querySelectorAll('.decline-request').forEach(button => {
+    button.addEventListener('click', function() {
+        const requestId = this.getAttribute('data-request-id');
+        const requestType = this.getAttribute('data-request-type');
+        fetch(`/handle_${requestType}_share_request/${requestId}/decline`, {
+            method: 'POST'
+        }).then(response => response.json()).then(data => {
+            if (data.status === 'success') {
+                alert('Request declined');
+                location.reload();
+            } else {
+                alert('Error declining request');
+            }
+        });
+    });
+});
+</script>
+{% endblock %}

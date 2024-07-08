@@ -1,0 +1,86 @@
+{% extends "base.html" %}
+{% block content %}
+<h2>{{ user_name }}</h2>
+<p>Age: {{ user_age }}</p>
+<p>Gender: {{ user_gender }}</p>
+<p>Location: {{ user_location }}</p>
+<h3>About</h3>
+<p>{{ user_about }}</p>
+{% if user_photos %}
+    <h3>Photos:</h3>
+    {% for photo in user_photos %}
+        <img src="{{ url_for('static', filename='uploads/' ~ photo['filename']) }}" alt="User Photo" style="width:150px; height:150px; {% if photo_reveal_status != 'accepted' %}filter: blur(5px);{% endif %}">
+    {% endfor %}
+{% endif %}
+{% if photo_reveal_status == 'none' %}
+<button id="send-photo-reveal-request" data-user-id="{{ user_id }}">Send Reveal Request</button>
+{% endif %}
+{% if photo_reveal_status == 'pending' %}
+<p style="color: orange;">Photo reveal request is pending...</p>
+{% endif %}
+{% if contact_share_status == 'none' %}
+<button id="send-contact-share-request" data-user-id="{{ user_id }}">Send Contact Share Request</button>
+{% endif %}
+{% if contact_share_status == 'pending' %}
+<p style="color: orange;">Contact share request is pending...</p>
+{% endif %}
+{% if contact_share_status == 'accepted' %}
+<h3>Contact Details</h3>
+<p>Email: {{ user_email }}</p>
+<p>Telephone: {{ user_tel }}</p>
+<p>Instagram: {{ user_instagram }}</p>
+<p>Telegram: {{ user_telegram }}</p>
+{% endif %}
+<script>
+document.getElementById('send-photo-reveal-request').addEventListener('click', function() {
+    const userId = this.getAttribute('data-user-id');
+    console.log('Sending photo reveal request to user ID:', userId);
+    if (!userId) {
+        console.error('User ID is not set.');
+        return;
+    }
+    fetch(`/send_photo_reveal_request/${userId}`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ user_id: userId })
+    }).then(response => response.json()).then(data => {
+        console.log('Response from server:', data);
+        if (data.status === 'success') {
+            alert(data.message);
+            location.reload();
+        } else {
+            alert(data.message);
+        }
+    }).catch(error => {
+        console.error('Error:', error);
+    });
+});
+document.getElementById('send-contact-share-request').addEventListener('click', function() {
+    const userId = this.getAttribute('data-user-id');
+    console.log('Sending contact share request to user ID:', userId);
+    if (!userId) {
+        console.error('User ID is not set.');
+        return;
+    }
+    fetch(`/send_contact_share_request/${userId}`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ user_id: userId })
+    }).then(response => response.json()).then(data => {
+        console.log('Response from server:', data);
+        if (data.status === 'success') {
+            alert(data.message);
+            location.reload();
+        } else {
+            alert(data.message);
+        }
+    }).catch(error => {
+        console.error('Error:', error);
+    });
+});
+</script>
+{% endblock %}

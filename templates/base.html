@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Relatika</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+</head>
+<body>
+    <nav>
+        <a href="/">Home</a>
+        {% if session['user_id'] %}
+            <a href="/profile">Profile</a>
+            <a href="/matches">Matches</a>
+            <a href="/browse">Browse</a>
+            <a href="/saved">Saved</a>
+            <a href="/notifications">Notifications {% if notification_count and notification_count > 0 %} ({{ notification_count }}) {% endif %}</a>
+            <a href="/logout">Logout</a>
+        {% else %}
+            <a href="/login">Login</a>
+        {% endif %}
+    </nav>
+    <div class="container">
+        {% block content %}
+        {% endblock %}
+    </div>
+</body>
+</html>

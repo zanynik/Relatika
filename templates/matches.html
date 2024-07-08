@@ -1,0 +1,74 @@
+{% extends "base.html" %}
+{% block content %}
+<h2>Matches</h2>
+<div class="list-container">
+    {% for match in matches %}
+    <div class="list-item">
+        <div class="profile">
+            <div class="profile-photo">
+                {% if match.photo %}
+                <img src="{{ url_for('static', filename='uploads/' ~ match.photo) }}" alt="User Photo" style="width:100px; height:100px;">
+                {% else %}
+                <img src="{{ url_for('static', filename='placeholder.png') }}" alt="Placeholder Photo" style="width:100px; height:100px;">
+                {% endif %}
+            </div>
+            <div class="profile-info">
+                <h3>{{ match.name }} (@<a href="{{ url_for('view_profile', user_id=match.user_id) }}">{{ match.username }}</a>)</h3>
+                <p>{{ match.about_glimpse }}</p>
+                <p>Match: {{ match.match_percentage }}%</p>
+            </div>
+            <div class="profile-actions">
+                <span class="heart {% if match.saved %}saved{% endif %}" data-profile-id="{{ match.user_id }}">&hearts;</span>
+            </div>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+<style>
+.list-container {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+.list-item {
+    display: flex;
+    align-items: center;
+    border: 1px solid #ccc;
+    padding: 10px;
+    border-radius: 5px;
+    background-color: #f9f9f9;
+}
+.profile-photo img {
+    border-radius: 50%;
+    margin-right: 20px;
+}
+.profile-actions {
+    margin-left: auto;
+}
+.heart {
+    font-size: 24px;
+    cursor: pointer;
+}
+.heart.saved {
+    color: red;
+}
+</style>
+<script>
+document.querySelectorAll('.heart').forEach(heart => {
+    heart.addEventListener('click', function() {
+        const profileId = this.getAttribute('data-profile-id');
+        fetch(`/save_profile/${profileId}`, {
+            method: 'POST'
+        }).then(response => response.json()).then(data => {
+            if (data.status === 'success') {
+                this.classList.toggle('saved');
+            } else {
+                alert(data.message);
+            }
+        }).catch(error => {
+            console.error('Error:', error);
+        });
+    });
+});
+</script>
+{% endblock %}

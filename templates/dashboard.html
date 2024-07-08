@@ -1,0 +1,13 @@
+{% extends "base.html" %}
+{% block content %}
+<h2>Welcome, {{ username }}</h2>
+<p>Navigate to:</p>
+<ul>
+    <li><a href="/profile">Profile</a></li>
+    <li><a href="/matches">Matches</a></li>
+    <li><a href="/browse">Browse</a></li>
+    <li><a href="/saved">Saved</a></li>
+    <li><a href="/notifications">Notifications</a></li>
+    <li><a href="/logout">Logout</a></li>
+</ul>
+{% endblock %}

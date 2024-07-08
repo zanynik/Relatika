@@ -1,0 +1,43 @@
+{% extends "base.html" %}
+{% block content %}
+<h2>Browse Profiles</h2>
+<div class="grid-container">
+    {% for user in users %}
+    <div class="grid-item" onclick="location.href='/view_profile/{{ user.id }}'">
+        <div class="profile">
+            <div class="profile-info">
+                <h3>{{ user.name }}</h3>
+                <p>Age: {{ user.age }}</p>
+                <p>Location: {{ user.location }}</p>
+                <p>{{ user.about[:50] if user.about else 'No description available' }}...</p>
+            </div>
+            <div class="profile-photo">
+                {% if user.photo %}
+                <img src="{{ url_for('static', filename='uploads/' ~ user.photo) }}" alt="User Photo" style="width:100px; height:100px; filter: blur(5px);">
+                {% else %}
+                <img src="{{ url_for('static', filename='placeholder.png') }}" alt="Placeholder Photo" style="width:100px; height:100px;">
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+<style>
+.grid-container {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 20px;
+}
+.grid-item {
+    border: 1px solid #ccc;
+    padding: 10px;
+    border-radius: 5px;
+    background-color: #f9f9f9;
+    text-align: center;
+}
+.profile-photo img {
+    border-radius: 50%;
+    margin-bottom: 10px;
+}
+</style>
+{% endblock %}
