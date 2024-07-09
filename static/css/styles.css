@@ -82,6 +82,10 @@ ul, ol {
     border-radius: 5px;
     background-color: #f9f9f9;
     text-align: center;
+    cursor: pointer;
+}
+.grid-item:hover {
+    border: 2px solid olive;
 }
 
 .profile-photo img {
@@ -94,7 +98,6 @@ ul, ol {
     flex-direction: column;
     gap: 10px;
 }
-
 .list-item {
     display: flex;
     align-items: center;
@@ -102,17 +105,34 @@ ul, ol {
     padding: 10px;
     border-radius: 5px;
     background-color: #f9f9f9;
+    cursor: pointer;
 }
-
+.list-item:hover {
+    border: 2px solid olive;
+}
+.profile-photo img {
+    border-radius: 50%;
+    margin-right: 20px;
+}
+.profile-info {
+    flex: 1;
+}
+.match-info {
+    text-align: center;
+    color: olive;
+    font-size: larger;
+}
+.contact-info {
+    flex: 1;
+    text-align: right;
+}
 .profile-actions {
     margin-left: auto;
 }
-
-.heart {
+.bookmark {
     font-size: 24px;
     cursor: pointer;
 }
-
-.heart.saved {
+.bookmark.saved {
     color: red;
 }

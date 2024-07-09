@@ -1,0 +1,37 @@
+{% extends "base.html" %}
+{% block content %}
+<h2>Register</h2>
+{% if error %}
+<p style="color: red;">{{ error }}</p>
+{% endif %}
+<form action="/register" method="post">
+    <label for="name">Name:</label>
+    <input type="text" id="name" name="name" required>
+    <br>
+    <label for="age">Age:</label>
+    <input type="number" id="age" name="age" required>
+    <br>
+    <label for="gender">Gender:</label>
+    <select id="gender" name="gender" required>
+        <option value="M">Male</option>
+        <option value="F">Female</option>
+        <option value="O">Other</option>
+    </select>
+    <br>
+    <label for="looking_for">Looking for:</label>
+    <input type="checkbox" name="looking_for" value="M"> Male
+    <input type="checkbox" name="looking_for" value="F"> Female
+    <input type="checkbox" name="looking_for" value="O"> Doesn't matter
+    <br>
+    <label for="location">Location:</label>
+    <input type="text" id="location" name="location" required>
+    <br>
+    <label for="username">Username:</label>
+    <input type="text" id="username" name="username" required>
+    <br>
+    <label for="password">Password:</label>
+    <input type="password" id="password" name="password" required>
+    <br>
+    <button type="submit" class="button">Register</button>
+</form>
+{% endblock %}

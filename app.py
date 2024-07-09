@@ -5,6 +5,10 @@ import re
 import os
 import time
 import random
+from pathlib import Path
+
+THIS_FOLDER = Path(__file__).parent.resolve()
+users_table = THIS_FOLDER / "users.db"
 
 app = Flask(__name__)
 app.secret_key = 'your_secret_key'
@@ -14,7 +18,7 @@ def get_db_connection():
     retries = 5
     while retries > 0:
         try:
-            conn = sqlite3.connect('users.db', check_same_thread=False)
+            conn = sqlite3.connect(users_table, check_same_thread=False)
             conn.row_factory = sqlite3.Row
             return conn
         except sqlite3.OperationalError as e:
@@ -41,6 +45,33 @@ def dashboard():
     user = conn.execute('SELECT * FROM users WHERE id = ?', (user_id,)).fetchone()
     conn.close()
     return render_template('dashboard.html', username=user['username'])
+
+@app.route('/register', methods=['GET', 'POST'])
+def register():
+    if request.method == 'POST':
+        username = request.form['username']
+        password = request.form['password']
+        name = request.form['name']
+        age = request.form['age']
+        gender = request.form['gender']
+        looking_for = request.form.getlist('looking_for')
+        location = request.form['location']
+
+        if not username or not password or not name or not age or not gender or not location:
+            return render_template('register.html', error="Please fill in all required fields")
+
+        conn = get_db_connection()
+        existing_user = conn.execute('SELECT * FROM users WHERE username = ?', (username,)).fetchone()
+        if existing_user:
+            conn.close()
+            return render_template('register.html', error="Username already exists")
+
+        conn.execute('INSERT INTO users (username, password, name, age, gender, looking_for, location) VALUES (?, ?, ?, ?, ?, ?, ?)', 
+                     (username, generate_password_hash(password), name, age, gender, ','.join(looking_for), location))
+        conn.commit()
+        conn.close()
+        return redirect(url_for('login'))
+    return render_template('register.html')
 
 @app.route('/login', methods=['GET', 'POST'])
 def login():
@@ -319,16 +350,23 @@ def handle_photo_share_request(request_id, action):
     if 'user_id' not in session:
         return jsonify({'status': 'error', 'message': 'Unauthorized'})
 
+    user_id = session['user_id']
     conn = get_db_connection()
     try:
         if action == 'accept':
-            conn.execute('UPDATE photo_reveals SET status = ? WHERE id = ?', ('accepted', request_id))
+            conn.execute('UPDATE photo_reveals SET status = ?, message = ? WHERE id = ?', ('accepted', None, request_id))
+            requester_id = conn.execute('SELECT requester_id FROM photo_reveals WHERE id = ?', (request_id,)).fetchone()['requester_id']
+            conn.execute('INSERT INTO photo_reveals (requester_id, requestee_id, status) VALUES (?, ?, ?)', (user_id, requester_id, 'accepted'))
+            message = f"Your photo reveal request to user {user_id} has been accepted."
+            conn.execute('UPDATE photo_reveals SET message = ? WHERE requester_id = ? AND requestee_id = ?', (message, requester_id, user_id))
         elif action == 'decline':
-            conn.execute('UPDATE photo_reveals SET status = ? WHERE id = ?', ('declined', request_id))
+            conn.execute('UPDATE photo_reveals SET status = ?, message = ? WHERE id = ?', ('declined', None, request_id))
+            requester_id = conn.execute('SELECT requester_id FROM photo_reveals WHERE id = ?', (request_id,)).fetchone()['requester_id']
+            message = f"Your photo reveal request to user {user_id} has been declined."
+            conn.execute('UPDATE photo_reveals SET message = ? WHERE requester_id = ? AND requestee_id = ?', (message, requester_id, user_id))
         conn.commit()
-        print(f"Photo reveal request {action}ed, request_id:", request_id)
     except Exception as e:
-        print(f"Error handling photo reveal request {action}:", e)
+        print(f"Error handling photo reveal request {action}: {e}")
         return jsonify({'status': 'error', 'message': f'Failed to {action} request'})
     finally:
         conn.close()
@@ -340,16 +378,23 @@ def handle_contact_share_request(request_id, action):
     if 'user_id' not in session:
         return jsonify({'status': 'error', 'message': 'Unauthorized'})
 
+    user_id = session['user_id']
     conn = get_db_connection()
     try:
         if action == 'accept':
-            conn.execute('UPDATE contact_shares SET status = ? WHERE id = ?', ('accepted', request_id))
+            conn.execute('UPDATE contact_shares SET status = ?, message = ? WHERE id = ?', ('accepted', None, request_id))
+            requester_id = conn.execute('SELECT requester_id FROM contact_shares WHERE id = ?', (request_id,)).fetchone()['requester_id']
+            conn.execute('INSERT INTO contact_shares (requester_id, requestee_id, status) VALUES (?, ?, ?)', (user_id, requester_id, 'accepted'))
+            message = f"Your contact share request to user {user_id} has been accepted."
+            conn.execute('UPDATE contact_shares SET message = ? WHERE requester_id = ? AND requestee_id = ?', (message, requester_id, user_id))
         elif action == 'decline':
-            conn.execute('UPDATE contact_shares SET status = ? WHERE id = ?', ('declined', request_id))
+            conn.execute('UPDATE contact_shares SET status = ?, message = ? WHERE id = ?', ('declined', None, request_id))
+            requester_id = conn.execute('SELECT requester_id FROM contact_shares WHERE id = ?', (request_id,)).fetchone()['requester_id']
+            message = f"Your contact share request to user {user_id} has been declined."
+            conn.execute('UPDATE contact_shares SET message = ? WHERE requester_id = ? AND requestee_id = ?', (message, requester_id, user_id))
         conn.commit()
-        print(f"Contact share request {action}ed, request_id:", request_id)
     except Exception as e:
-        print(f"Error handling contact share request {action}:", e)
+        print(f"Error handling contact share request {action}: {e}")
         return jsonify({'status': 'error', 'message': f'Failed to {action} request'})
     finally:
         conn.close()
@@ -363,7 +408,6 @@ def notifications():
 
     user_id = session['user_id']
     conn = get_db_connection()
-
     # Get photo reveal requests sent to the current user
     photo_reveals = conn.execute('''
         SELECT photo_reveals.id as request_id, users.username, photo_reveals.status 
@@ -380,8 +424,12 @@ def notifications():
         WHERE contact_shares.requestee_id = ? AND contact_shares.status = 'pending'
     ''', (user_id,)).fetchall()
 
+    photo_reveal_notifications = conn.execute('SELECT message, id FROM photo_reveals WHERE requester_id = ? AND message IS NOT NULL ORDER BY id DESC', (user_id,)).fetchall()
+    contact_share_notifications = conn.execute('SELECT message, id FROM contact_shares WHERE requester_id = ? AND message IS NOT NULL ORDER BY id DESC', (user_id,)).fetchall()
+    notifications = photo_reveal_notifications + contact_share_notifications
+    notifications.sort(key=lambda x: x['id'], reverse=True)
     conn.close()
-    return render_template('notifications.html', photo_reveals=photo_reveals, contact_shares=contact_shares)
+    return render_template('notifications.html', notifications=notifications,photo_reveals=photo_reveals, contact_shares=contact_shares)
 
 @app.context_processor
 def inject_notification_count():
@@ -390,8 +438,10 @@ def inject_notification_count():
         conn = get_db_connection()
         photo_reveal_count = conn.execute('SELECT COUNT(*) FROM photo_reveals WHERE requestee_id = ? AND status = "pending"', (user_id,)).fetchone()[0]
         contact_share_count = conn.execute('SELECT COUNT(*) FROM contact_shares WHERE requestee_id = ? AND status = "pending"', (user_id,)).fetchone()[0]
+        photo_reveal_sent_count = conn.execute('SELECT COUNT(*) FROM photo_reveals WHERE requester_id = ? AND status <> "pending"', (user_id,)).fetchone()[0]
+        contact_share_sent_count = conn.execute('SELECT COUNT(*) FROM contact_shares WHERE requester_id = ? AND status <> "pending"', (user_id,)).fetchone()[0]
         conn.close()
-        return {'notification_count': photo_reveal_count + contact_share_count}
+        return {'notification_count': photo_reveal_count + contact_share_count + photo_reveal_sent_count + contact_share_sent_count }
     return {'notification_count': 0}
 
 if __name__ == '__main__':

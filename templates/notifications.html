@@ -1,7 +1,7 @@
 {% extends "base.html" %}
 {% block content %}
 <h2>Notifications</h2>
-<h3>Photo Reveal Requests</h3>
+<h3>Incoming</h3>
 <ul>
     {% for request in photo_reveals %}
         <li>
@@ -11,7 +11,6 @@
         </li>
     {% endfor %}
 </ul>
-<h3>Contact Share Requests</h3>
 <ul>
     {% for request in contact_shares %}
         <li>
@@ -19,6 +18,12 @@
             <button class="accept-request" data-request-id="{{ request.request_id }}" data-request-type="contact">Accept</button>
             <button class="decline-request" data-request-id="{{ request.request_id }}" data-request-type="contact">Decline</button>
         </li>
+    {% endfor %}
+</ul>
+<h3>Outgoing</h3>
+<ul>
+    {% for notification in notifications %}
+    <li>{{ notification['message'] }}</li>
     {% endfor %}
 </ul>
 <script>
@@ -38,7 +43,7 @@ document.querySelectorAll('.accept-request').forEach(button => {
         });
     });
 });
-
+    
 document.querySelectorAll('.decline-request').forEach(button => {
     button.addEventListener('click', function() {
         const requestId = this.getAttribute('data-request-id');
@@ -55,5 +60,5 @@ document.querySelectorAll('.decline-request').forEach(button => {
         });
     });
 });
-</script>
+</script>    
 {% endblock %}
