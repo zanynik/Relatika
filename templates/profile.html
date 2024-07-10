@@ -2,82 +2,99 @@
 {% block content %}
 <h2>Profile</h2>
 <form action="/profile" method="post" enctype="multipart/form-data" class="profile-form">
-    <div class="form-group">
-        <label for="name">Name:</label>
-        <input type="text" id="name" name="name" value="{{ user_name }}" required>
-    </div>
-    <div class="form-group">
-        <label for="age">Age:</label>
-        <input type="number" id="age" name="age" value="{{ user_age }}" required>
-    </div>
-    <div class="form-group">
-        <label for="gender">Gender:</label>
-        <select id="gender" name="gender">
-            <option value="M" {% if user_gender == 'M' %}selected{% endif %}>Male</option>
-            <option value="F" {% if user_gender == 'F' %}selected{% endif %}>Female</option>
-            <option value="O" {% if user_gender == 'O' %}selected{% endif %}>Other</option>
-        </select>
-    </div>
-    <div class="form-group">
-        <label for="looking_for">Looking for:</label>
-        <div class="checkbox-group">
-            <input type="checkbox" name="looking_for" value="M" {% if 'M' in (user_looking_for or '') %}checked{% endif %}> Male
-            <input type="checkbox" name="looking_for" value="F" {% if 'F' in (user_looking_for or '') %}checked{% endif %}> Female
-            <input type="checkbox" name="looking_for" value="D" {% if 'D' in (user_looking_for or '') %}checked{% endif %}> Doesn't matter
+    <!-- Section 1: Name, Age, Gender, Looking for, Location -->
+    <div class="section">
+        <div class="form-group">
+            <label for="name">Name:</label>
+            <input type="text" id="name" name="name" value="{{ user_name }}" required>
+        </div>
+        <div class="form-group">
+            <label for="age">Age:</label>
+            <input type="number" id="age" name="age" value="{{ user_age }}" required>
+        </div>
+        <div class="form-group">
+            <label for="gender">Gender:</label>
+            <select id="gender" name="gender">
+                <option value="M" {% if user_gender == 'M' %}selected{% endif %}>Male</option>
+                <option value="F" {% if user_gender == 'F' %}selected{% endif %}>Female</option>
+                <option value="O" {% if user_gender == 'O' %}selected{% endif %}>Other</option>
+            </select>
+        </div>
+        <div class="form-group">
+            <label for="looking_for">Looking for:</label>
+            <div class="checkbox-group">
+                <input type="checkbox" name="looking_for" value="M" {% if 'M' in (user_looking_for or '') %}checked{% endif %}> Male
+                <input type="checkbox" name="looking_for" value="F" {% if 'F' in (user_looking_for or '') %}checked{% endif %}> Female
+                <input type="checkbox" name="looking_for" value="D" {% if 'D' in (user_looking_for or '') %}checked{% endif %}> Doesn't matter
+            </div>
+        </div>
+        <div class="form-group">
+            <label for="location">Location:</label>
+            <select id="location" name="location">
+                {% for loc in locations %}
+                    <option value="{{ loc }}" {% if user_location == loc %}selected{% endif %}>{{ loc }}</option>
+                {% endfor %}
+            </select>
         </div>
     </div>
-    <div class="form-group">
-        <label for="location">Location:</label>
-        <select id="location" name="location">
-            {% for loc in locations %}
-                <option value="{{ loc }}" {% if user_location == loc %}selected{% endif %}>{{ loc }}</option>
-            {% endfor %}
-        </select>
+    
+    <!-- Section 2: About -->
+    <div class="section about-section">
+        <div class="form-group">
+            <label for="about">About:</label>
+            <textarea name="about" id="about" rows="10">{{ user_about }}</textarea>
+        </div>
     </div>
-    <div class="form-group">
-        <label for="about">About:</label>
-        <textarea name="about" id="about" rows="10">{{ user_about }}</textarea>
-    </div>
-    <div class="form-group">
-        <label for="photos">Upload photos (up to 3):</label>
-        <input type="file" name="photos" id="photos" multiple>
-    </div>
-    {% if user_photos %}
+
+    <!-- Section 3: Photos -->
+    <div class="section">
+        <div class="form-group">
+            <label for="photos">Upload photos (up to 3):</label>
+            <input type="file" name="photos" id="photos" multiple>
+        </div>
+        {% if user_photos %}
         <div class="form-group">
             <h3>Uploaded Photos:</h3>
             <div class="photo-gallery">
                 {% for photo in user_photos %}
-                    <div class="photo-container">
-                        <img src="{{ url_for('static', filename='uploads/' ~ photo['filename']) }}" alt="User Photo">
-                        <button type="button" class="delete-photo" data-filename="{{ photo['filename'] }}">X</button>
-                    </div>
+                <div class="photo-container">
+                    <img src="{{ url_for('static', filename='uploads/' ~ photo['filename']) }}" alt="User Photo">
+                    <button type="button" class="delete-photo" data-filename="{{ photo['filename'] }}">X</button>
+                </div>
                 {% endfor %}
             </div>
         </div>
-    {% endif %}
-    <div class="form-group">
-        <h3>Contact Details (Will not be shared publicly)</h3>
+        {% endif %}
     </div>
-    <div class="form-group">
-        <label for="email">Email:</label>
-        <input type="email" id="email" name="email" value="{{ user_email }}">
+
+    <!-- Section 4: Contact Details -->
+    <div class="section contact-section">
+        <div class="form-group">
+            <h3>Contact Details (Will not be shared publicly)</h3>
+        </div>
+        <div class="form-group">
+            <label for="email">Email:</label>
+            <input type="email" id="email" name="email" value="{{ user_email }}">
+        </div>
+        <div class="form-group">
+            <label for="tel">Telephone:</label>
+            <input type="tel" id="tel" name="tel" value="{{ user_tel }}">
+        </div>
+        <div class="form-group">
+            <label for="instagram">Instagram:</label>
+            <input type="text" id="instagram" name="instagram" value="{{ user_instagram }}">
+        </div>
+        <div class="form-group">
+            <label for="telegram">Telegram:</label>
+            <input type="text" id="telegram" name="telegram" value="{{ user_telegram }}">
+        </div>
     </div>
-    <div class="form-group">
-        <label for="tel">Telephone:</label>
-        <input type="tel" id="tel" name="tel" value="{{ user_tel }}">
-    </div>
-    <div class="form-group">
-        <label for="instagram">Instagram:</label>
-        <input type="text" id="instagram" name="instagram" value="{{ user_instagram }}">
-    </div>
-    <div class="form-group">
-        <label for="telegram">Telegram:</label>
-        <input type="text" id="telegram" name="telegram" value="{{ user_telegram }}">
-    </div>
+
     <div class="form-group">
         <button type="submit" class="button">Save</button>
     </div>
 </form>
+
 <script>
 document.querySelectorAll('.delete-photo').forEach(button => {
     button.addEventListener('click', function() {
@@ -94,6 +111,7 @@ document.querySelectorAll('.delete-photo').forEach(button => {
     });
 });
 </script>
+
 <style>
 .profile-form {
     max-width: 600px;
@@ -105,6 +123,17 @@ document.querySelectorAll('.delete-photo').forEach(button => {
     background-color: #ffffff;
     border-radius: 10px;
     box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+}
+
+.section {
+    grid-column: span 2;
+    margin-bottom: 20px;
+}
+
+.about-section {
+    background-color: #f9f9f9;
+    padding: 15px;
+    border-radius: 10px;
 }
 
 .form-group {

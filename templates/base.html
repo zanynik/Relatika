@@ -5,20 +5,73 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Relatika</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f5f5f5;
+            color: #333;
+        }
+        nav {
+            background-color: #007bff;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            padding: 1rem 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            color: white;
+        }
+        nav .logo {
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: white;
+        }
+        nav .nav-links {
+            display: flex;
+            align-items: center;
+        }
+        nav a {
+            color: white;
+            text-decoration: none;
+            margin: 0 1rem;
+            padding: 0.5rem;
+            transition: color 0.3s ease, background-color 0.3s ease;
+        }
+        nav a:hover {
+            background-color: #0056b3;
+            border-radius: 4px;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 2rem auto;
+            padding: 0 1rem;
+            background-color: white;
+            border-radius: 10px;
+            box-shadow: 0 0 15px rgba(0, 0, 0, 0.1);
+            padding: 2rem;
+        }
+        .container h1, .container h2, .container h3, .container p {
+            margin-bottom: 1.5rem;
+        }
+    </style>
 </head>
 <body>
     <nav>
-        <a href="/">Home</a>
-        {% if session['user_id'] %}
-            <a href="/profile">Profile</a>
-            <a href="/matches">Matches</a>
-            <a href="/browse">Browse</a>
-            <a href="/saved">Saved</a>
-            <a href="/notifications">Notifications {% if notification_count and notification_count > 0 %} ({{ notification_count }}) {% endif %}</a>
-            <a href="/logout">Logout</a>
-        {% else %}
-            <a href="/login">Login</a>
-        {% endif %}
+        <div class="logo">Relatika</div>
+        <div class="nav-links">
+            <a href="/">Home</a>
+            {% if session['user_id'] %}
+                <a href="/profile">Profile</a>
+                <a href="/matches">Matches</a>
+                <a href="/browse">Browse</a>
+                <a href="/saved">Saved</a>
+                <a href="/notifications">Notifications {% if notification_count and notification_count > 0 %} ({{ notification_count }}) {% endif %}</a>
+                <a href="/logout">Logout</a>
+            {% else %}
+                <a href="/login">Login</a>
+            {% endif %}
+        </div>
     </nav>
     <div class="container">
         {% block content %}

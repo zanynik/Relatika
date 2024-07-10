@@ -1,37 +1,108 @@
 {% extends "base.html" %}
 {% block content %}
-<h2>Register</h2>
-{% if error %}
-<p style="color: red;">{{ error }}</p>
-{% endif %}
-<form action="/register" method="post">
-    <label for="name">Name:</label>
-    <input type="text" id="name" name="name" required>
-    <br>
-    <label for="age">Age:</label>
-    <input type="number" id="age" name="age" required>
-    <br>
-    <label for="gender">Gender:</label>
-    <select id="gender" name="gender" required>
-        <option value="M">Male</option>
-        <option value="F">Female</option>
-        <option value="O">Other</option>
-    </select>
-    <br>
-    <label for="looking_for">Looking for:</label>
-    <input type="checkbox" name="looking_for" value="M"> Male
-    <input type="checkbox" name="looking_for" value="F"> Female
-    <input type="checkbox" name="looking_for" value="O"> Doesn't matter
-    <br>
-    <label for="location">Location:</label>
-    <input type="text" id="location" name="location" required>
-    <br>
-    <label for="username">Username:</label>
-    <input type="text" id="username" name="username" required>
-    <br>
-    <label for="password">Password:</label>
-    <input type="password" id="password" name="password" required>
-    <br>
-    <button type="submit" class="button">Register</button>
-</form>
+<div class="register-container">
+    <h2>Register</h2>
+    {% if error %}
+    <p class="error-message">{{ error }}</p>
+    {% endif %}
+    <form action="/register" method="post" class="form-register">
+        <div class="form-group">
+            <label for="name">Name:</label>
+            <input type="text" id="name" name="name" required>
+        </div>
+        <div class="form-group">
+            <label for="age">Age:</label>
+            <input type="number" id="age" name="age" required>
+        </div>
+        <div class="form-group">
+            <label for="gender">Gender:</label>
+            <select id="gender" name="gender" required>
+                <option value="M">Male</option>
+                <option value="F">Female</option>
+                <option value="O">Other</option>
+            </select>
+        </div>
+        <div class="form-group">
+            <label for="looking_for">Looking for:</label>
+            <div class="checkbox-group">
+                <input type="checkbox" name="looking_for" value="M"> Male
+                <input type="checkbox" name="looking_for" value="F"> Female
+                <input type="checkbox" name="looking_for" value="O"> Doesn't matter
+            </div>
+        </div>
+        <div class="form-group">
+            <label for="location">Location:</label>
+            <input type="text" id="location" name="location" required>
+        </div>
+        <div class="form-group">
+            <label for="username">Username:</label>
+            <input type="text" id="username" name="username" required>
+        </div>
+        <div class="form-group">
+            <label for="password">Password:</label>
+            <input type="password" id="password" name="password" required>
+        </div>
+        <button type="submit" class="button">Register</button>
+    </form>
+</div>
+
+<style>
+.register-container {
+    max-width: 600px;
+    margin: 2rem auto;
+    padding: 2rem;
+    background-color: #fff;
+    border-radius: 10px;
+    box-shadow: 0 0 15px rgba(0, 0, 0, 0.1);
+    text-align: center;
+}
+
+h2 {
+    margin-bottom: 1.5rem;
+}
+
+.error-message {
+    color: red;
+    margin-bottom: 1rem;
+}
+
+.form-register .form-group {
+    margin-bottom: 1rem;
+    text-align: left;
+}
+
+.form-register label {
+    display: block;
+    margin-bottom: 0.5rem;
+    font-weight: bold;
+}
+
+.form-register input,
+.form-register select {
+    width: 100%;
+    padding: 0.5rem;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+}
+
+.checkbox-group {
+    display: flex;
+    gap: 10px;
+}
+
+.button {
+    width: 100%;
+    padding: 0.75rem;
+    background-color: #007bff;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    margin-top: 1rem;
+}
+
+.button:hover {
+    background-color: #0056b3;
+}
+</style>
 {% endblock %}

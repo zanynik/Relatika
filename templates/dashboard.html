@@ -1,13 +1,64 @@
 {% extends "base.html" %}
+
 {% block content %}
-<h2>Welcome, {{ username }}</h2>
-<p>Navigate to:</p>
-<ul>
-    <li><a href="/profile">Profile</a></li>
-    <li><a href="/matches">Matches</a></li>
-    <li><a href="/browse">Browse</a></li>
-    <li><a href="/saved">Saved</a></li>
-    <li><a href="/notifications">Notifications</a></li>
-    <li><a href="/logout">Logout</a></li>
-</ul>
+<div class="row justify-content-center welcome-container">
+    <div class="col-md-8 text-center">
+        <h2 class="welcome-header">Welcome, {{ session.username }}</h2>
+        <p class="welcome-text">Navigate to:</p>
+        <ul class="navigation-list">
+            <li class="navigation-item"><a href="/profile" class="navigation-link">Profile</a></li>
+            <li class="navigation-item"><a href="/matches" class="navigation-link">Matches</a></li>
+            <li class="navigation-item"><a href="/browse" class="navigation-link">Browse</a></li>
+            <li class="navigation-item"><a href="/saved" class="navigation-link">Saved</a></li>
+            <li class="navigation-item"><a href="/notifications" class="navigation-link">Notifications</a></li>
+            <li class="navigation-item"><a href="/logout" class="navigation-link">Logout</a></li>
+        </ul>
+    </div>
+</div>
+
+<style>
+.welcome-container {
+    margin-top: 50px;
+    background-color: #f9f9f9;
+    padding: 30px;
+    border-radius: 10px;
+    box-shadow: 0 0 15px rgba(0, 0, 0, 0.1);
+}
+
+.welcome-header {
+    font-size: 2.5em;
+    color: #333;
+    margin-bottom: 20px;
+}
+
+.welcome-text {
+    font-size: 1.2em;
+    color: #555;
+    margin-bottom: 20px;
+}
+
+.navigation-list {
+    list-style-type: none;
+    padding: 0;
+}
+
+.navigation-item {
+    margin: 10px 0;
+}
+
+.navigation-link {
+    text-decoration: none;
+    font-size: 1.2em;
+    color: #007bff;
+    transition: color 0.3s;
+}
+
+.navigation-link:hover {
+    color: #0056b3;
+}
+
+.text-center {
+    text-align: center;
+}
+</style>
 {% endblock %}
