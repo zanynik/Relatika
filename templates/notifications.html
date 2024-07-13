@@ -23,7 +23,12 @@
 <h3>Outgoing</h3>
 <ul>
     {% for notification in notifications %}
-    <li>{{ notification['message'] }}</li>
+        <li>
+            {{ notification['message'] }}
+            {% if 'Acknowledged' not in notification['message'] %}
+            <button class="acknowledge-notification" data-notification-id="{{ notification['id'] }}" data-notification-type="{{ notification['type'] }}">Ok</button>
+            {% endif %}
+        </li>
     {% endfor %}
 </ul>
 <script>
@@ -60,5 +65,30 @@ document.querySelectorAll('.decline-request').forEach(button => {
         });
     });
 });
-</script>    
+
+document.querySelectorAll('.acknowledge-notification').forEach(button => {
+    button.addEventListener('click', function() {
+        const notificationId = this.getAttribute('data-notification-id');
+        const notificationType = this.getAttribute('data-notification-type');
+        fetch(`/acknowledge_notification/${notificationId}/${notificationType}`, {
+            method: 'POST'
+        }).then(response => response.json()).then(data => {
+            if (data.status === 'success') {
+                this.parentElement.remove();
+                updateNotificationCount();
+            } else {
+                alert('Error acknowledging notification');
+            }
+        });
+    });
+});
+
+function updateNotificationCount() {
+    fetch('/notification_count')
+        .then(response => response.json())
+        .then(data => {
+            document.getElementById('notification-count').textContent = data.count;
+        });
+}
+</script>
 {% endblock %}

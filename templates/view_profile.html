@@ -1,38 +1,51 @@
 {% extends "base.html" %}
 {% block content %}
-<h2>{{ user_name }}</h2>
-<p>Age: {{ user_age }}</p>
-<p>Gender: {{ user_gender }}</p>
-<p>Location: {{ user_location }}</p>
-<h3>About</h3>
-<p>{{ user_about }}</p>
-{% if user_photos %}
-    <h3>Photos:</h3>
-    {% for photo in user_photos %}
-        <img src="{{ url_for('static', filename='uploads/' ~ photo['filename']) }}" alt="User Photo" style="width:150px; height:150px; {% if photo_reveal_status != 'accepted' %}filter: blur(5px);{% endif %}">
-    {% endfor %}
-{% endif %}
-{% if photo_reveal_status == 'none' %}
-<button id="send-photo-reveal-request" data-user-id="{{ user_id }}">Send Reveal Request</button>
-{% endif %}
-{% if photo_reveal_status == 'pending' %}
-<p style="color: orange;">Photo reveal request is pending...</p>
-{% endif %}
-{% if contact_share_status == 'none' %}
-<button id="send-contact-share-request" data-user-id="{{ user_id }}">Send Contact Share Request</button>
-{% endif %}
-{% if contact_share_status == 'pending' %}
-<p style="color: orange;">Contact share request is pending...</p>
-{% endif %}
-{% if contact_share_status == 'accepted' %}
-<h3>Contact Details</h3>
-<p>Email: {{ user_email }}</p>
-<p>Telephone: {{ user_tel }}</p>
-<p>Instagram: {{ user_instagram }}</p>
-<p>Telegram: {{ user_telegram }}</p>
-{% endif %}
+<div class="profile-container">
+    <h2>{{ user_name }}</h2>
+    <p>Age: {{ user_age }}</p>
+    <p>Gender: {{ user_gender }}</p>
+    <p>Location: {{ user_location }}</p>
+
+    <h3>About</h3>
+    <p>{{ user_about }}</p>
+
+    {% if user_photos %}
+    <h3>Photos</h3>
+    <div class="photo-gallery">
+        {% for photo in user_photos %}
+        <div class="photo-container">
+            <img src="{{ url_for('static', filename='uploads/' ~ photo['filename']) }}" alt="User Photo" 
+                class="user-photo" 
+                style="{% if photo_reveal_status != 'accepted' %}filter: blur(5px);{% endif %}">
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+
+    {% if photo_reveal_status == 'none' %}
+    <button id="send-photo-reveal-request" class="action-button" data-user-id="{{ user_id }}">Send Reveal Request</button>
+    {% endif %}
+    {% if photo_reveal_status == 'pending' %}
+    <p class="status-message pending">Photo reveal request is pending...</p>
+    {% endif %}
+
+    {% if contact_share_status == 'none' %}
+    <button id="send-contact-share-request" class="action-button" data-user-id="{{ user_id }}">Send Contact Share Request</button>
+    {% endif %}
+    {% if contact_share_status == 'pending' %}
+    <p class="status-message pending">Contact share request is pending...</p>
+    {% endif %}
+    {% if contact_share_status == 'accepted' %}
+    <h3>Contact Details</h3>
+    <p>Email: {{ user_email }}</p>
+    <p>Telephone: {{ user_tel }}</p>
+    <p>Instagram: {{ user_instagram }}</p>
+    <p>Telegram: {{ user_telegram }}</p>
+    {% endif %}
+</div>
+
 <script>
-document.getElementById('send-photo-reveal-request').addEventListener('click', function() {
+document.getElementById('send-photo-reveal-request')?.addEventListener('click', function() {
     const userId = this.getAttribute('data-user-id');
     console.log('Sending photo reveal request to user ID:', userId);
     if (!userId) {
@@ -57,7 +70,8 @@ document.getElementById('send-photo-reveal-request').addEventListener('click', f
         console.error('Error:', error);
     });
 });
-document.getElementById('send-contact-share-request').addEventListener('click', function() {
+
+document.getElementById('send-contact-share-request')?.addEventListener('click', function() {
     const userId = this.getAttribute('data-user-id');
     console.log('Sending contact share request to user ID:', userId);
     if (!userId) {
@@ -83,4 +97,62 @@ document.getElementById('send-contact-share-request').addEventListener('click', 
     });
 });
 </script>
+
+<style>
+.profile-container {
+    max-width: 800px;
+    margin: 2rem auto;
+    padding: 2rem;
+    background-color: #fff;
+    border-radius: 10px;
+    box-shadow: 0 0 15px rgba(0, 0, 0, 0.1);
+    text-align: center;
+}
+
+.profile-container h2, .profile-container h3 {
+    margin-bottom: 1rem;
+}
+
+.photo-gallery {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 10px;
+}
+
+.photo-container {
+    position: relative;
+}
+
+.user-photo {
+    width: 150px;
+    height: 150px;
+    border-radius: 10px;
+    object-fit: cover;
+}
+
+.action-button {
+    background-color: #007bff;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    padding: 10px 20px;
+    cursor: pointer;
+    margin-top: 1rem;
+    display: inline-block;
+}
+
+.action-button:hover {
+    background-color: #0056b3;
+}
+
+.status-message {
+    margin-top: 1rem;
+    font-weight: bold;
+}
+
+.status-message.pending {
+    color: orange;
+}
+</style>
 {% endblock %}

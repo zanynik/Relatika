@@ -1,7 +1,52 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Profile</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
+    <script src="https://unpkg.com/leaflet-geosearch@3.2.0/dist/bundle.min.js"></script>
+    <style>
+        /* Add necessary CSS for the dropdown */
+        .autocomplete-suggestions {
+            position: absolute;
+            border: 1px solid #ccc;
+            background: #fff;
+            max-height: 150px;
+            overflow-y: auto;
+            z-index: 1000;
+            width: 100%;
+            top: calc(100% + 5px); /* Adjusted to position below the textbox */
+        }
+        .autocomplete-suggestion {
+            padding: 10px;
+            cursor: pointer;
+        }
+        .autocomplete-suggestion:hover {
+            background-color: #e9e9e9;
+        }
+        .notification {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 10px 20px;
+            background-color: #4caf50;
+            color: white;
+            border-radius: 5px;
+            display: none;
+            z-index: 1001;
+        }
+        .notification.error {
+            background-color: #f44336;
+        }
+    </style>
+</head>
+<body>
 {% extends "base.html" %}
 {% block content %}
 <h2>Profile</h2>
-<form action="/profile" method="post" enctype="multipart/form-data" class="profile-form">
+<form id="locationForm" action="/profile" method="post" enctype="multipart/form-data" class="profile-form">
     <!-- Section 1: Name, Age, Gender, Looking for, Location -->
     <div class="section">
         <div class="form-group">
@@ -28,14 +73,13 @@
                 <input type="checkbox" name="looking_for" value="D" {% if 'D' in (user_looking_for or '') %}checked{% endif %}> Doesn't matter
             </div>
         </div>
-        <div class="form-group">
+        <div class="form-group" style="position: relative;">
             <label for="location">Location:</label>
-            <select id="location" name="location">
-                {% for loc in locations %}
-                    <option value="{{ loc }}" {% if user_location == loc %}selected{% endif %}>{{ loc }}</option>
-                {% endfor %}
-            </select>
+            <input type="text" id="location" name="location" placeholder="Enter a city" value="{{ user_location }}" required>
+            <div id="autocomplete-suggestions" class="autocomplete-suggestions"></div>
         </div>
+        <input type="hidden" id="latitude" name="latitude" value="{{ user_latitude }}">
+        <input type="hidden" id="longitude" name="longitude" value="{{ user_longitude }}">
     </div>
     
     <!-- Section 2: About -->
@@ -94,6 +138,89 @@
         <button type="submit" class="button">Save</button>
     </div>
 </form>
+<!-- Data Deletion Section -->
+<div class="data-deletion">
+    <h3>Delete Your Data</h3>
+    <p>If you wish to delete all your data from our system, click the button below. This action is irreversible.</p>
+    <form id="delete-data-form" action="/delete_data" method="post">
+        <button type="button" class="button delete-button" onclick="confirmDeletion()">Delete My Data</button>
+    </form>
+</div>
+
+<script>
+function confirmDeletion() {
+    if (confirm("Are you sure you want to delete all your data? This action is irreversible.")) {
+        document.getElementById('delete-data-form').submit();
+    }
+}
+</script>
+
+<div class="notification" id="notification"></div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const provider = new window.GeoSearch.OpenStreetMapProvider();
+        const input = document.querySelector('#location');
+        const suggestionsContainer = document.querySelector('#autocomplete-suggestions');
+        const latitudeInput = document.querySelector('#latitude');
+        const longitudeInput = document.querySelector('#longitude');
+        const notification = document.getElementById('notification');
+
+        input.addEventListener('input', (e) => {
+            if (!e.target.value) {
+                suggestionsContainer.innerHTML = '';
+                return;
+            }
+            provider.search({ query: e.target.value })
+                .then((results) => {
+                    suggestionsContainer.innerHTML = results.map(result => `
+                        <div class="autocomplete-suggestion" data-lat="${result.y}" data-lng="${result.x}">
+                            ${result.label}
+                        </div>`).join('');
+                })
+                .catch((error) => console.error(error));
+        });
+
+        suggestionsContainer.addEventListener('click', (e) => {
+            if (e.target.classList.contains('autocomplete-suggestion')) {
+                input.value = e.target.innerText;
+                latitudeInput.value = e.target.getAttribute('data-lat');
+                longitudeInput.value = e.target.getAttribute('data-lng');
+                suggestionsContainer.innerHTML = '';
+            }
+        });
+
+        document.getElementById('locationForm').addEventListener('submit', function(event) {
+            event.preventDefault();
+            const formData = new FormData(this);
+            formData.append('latitude', latitudeInput.value);
+            formData.append('longitude', longitudeInput.value);
+
+            fetch('/profile', {
+                method: 'POST',
+                body: formData
+            }).then(response => response.json()).then(data => {
+                if (data.status === 'success') {
+                    showNotification('Profile saved successfully', 'success');
+                } else {
+                    showNotification('Error saving profile', 'error');
+                }
+            }).catch(error => {
+                console.error('Error:', error);
+                showNotification('Error saving profile', 'error');
+            });
+        });
+
+        function showNotification(message, type) {
+            notification.textContent = message;
+            notification.className = `notification ${type}`;
+            notification.style.display = 'block';
+            setTimeout(() => {
+                notification.style.display = 'none';
+            }, 3000);
+        }
+    });
+</script>
 
 <script>
 document.querySelectorAll('.delete-photo').forEach(button => {
@@ -210,3 +337,5 @@ document.querySelectorAll('.delete-photo').forEach(button => {
 }
 </style>
 {% endblock %}
+</body>
+</html>

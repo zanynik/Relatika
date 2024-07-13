@@ -54,6 +54,23 @@
         .container h1, .container h2, .container h3, .container p {
             margin-bottom: 1.5rem;
         }
+        footer {
+            background-color: #007bff;
+            color: white;
+            text-align: center;
+            padding: 1rem 0;
+        }
+        footer a {
+            color: white;
+            text-decoration: none;
+            margin: 0 1rem;
+            transition: color 0.3s ease, background-color 0.3s ease;
+        }
+        footer a:hover {
+            background-color: #0056b3;
+            border-radius: 4px;
+            padding: 0.2rem 0.5rem;
+        }
     </style>
 </head>
 <body>
@@ -77,5 +94,10 @@
         {% block content %}
         {% endblock %}
     </div>
+    <footer>
+        <a href="/contact">Contact</a>
+        <a href="/terms">Terms and Conditions</a>
+        <a href="/privacy">Privacy Policy</a>
+    </footer>
 </body>
 </html>

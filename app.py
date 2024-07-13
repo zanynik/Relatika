@@ -1,4 +1,5 @@
 from flask import Flask, render_template, request, redirect, url_for, session, jsonify
+from werkzeug.security import generate_password_hash, check_password_hash
 import sqlite3
 from collections import Counter
 import re
@@ -51,23 +52,32 @@ def register():
     if request.method == 'POST':
         username = request.form['username']
         password = request.form['password']
+        confirm_password = request.form['confirm_password']
         name = request.form['name']
         age = request.form['age']
         gender = request.form['gender']
         looking_for = request.form.getlist('looking_for')
         location = request.form['location']
+        latitude = request.form['latitude']
+        longitude = request.form['longitude']
 
-        if not username or not password or not name or not age or not gender or not location:
+        if not username or not password or not name or not age or not gender or not location or not latitude or not longitude:
             return render_template('register.html', error="Please fill in all required fields")
 
+        if password != confirm_password:
+            return render_template('register.html', error="Passwords do not match")
+        
+        if len(password) < 8 or not any(char.isdigit() for char in password) or not any(char.isupper() for char in password):
+            return render_template('register.html', error="Password must be at least 8 characters long and include at least one number and one uppercase letter.")
+        
         conn = get_db_connection()
         existing_user = conn.execute('SELECT * FROM users WHERE username = ?', (username,)).fetchone()
         if existing_user:
             conn.close()
             return render_template('register.html', error="Username already exists")
 
-        conn.execute('INSERT INTO users (username, password, name, age, gender, looking_for, location) VALUES (?, ?, ?, ?, ?, ?, ?)', 
-                     (username, generate_password_hash(password), name, age, gender, ','.join(looking_for), location))
+        conn.execute('INSERT INTO users (username, password, name, age, gender, looking_for, location, latitude, longitude) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)', 
+                     (username, generate_password_hash(password), name, age, gender, ','.join(looking_for), location, latitude, longitude))
         conn.commit()
         conn.close()
         return redirect(url_for('login'))
@@ -82,24 +92,15 @@ def login():
         conn = get_db_connection()
         user = conn.execute('SELECT * FROM users WHERE username = ?', (username,)).fetchone()
         
-        if user:
-            if user['password'] == password:
-                session['user_id'] = user['id']
-                conn.close()
-                return redirect(url_for('profile'))
-            else:
-                conn.close()
-                return 'Invalid password'
-        else:
-            # Create a new user
-            conn.execute('INSERT INTO users (username, password) VALUES (?, ?)', (username, password))
-            conn.commit()
-            user = conn.execute('SELECT * FROM users WHERE username = ?', (username,)).fetchone()
+        if user and check_password_hash(user['password'], password):
             session['user_id'] = user['id']
             conn.close()
             return redirect(url_for('profile'))
-    else:
-        return render_template('login.html')
+        else:
+            conn.close()
+            error = 'Invalid username or password'
+            return render_template('login.html', error=error)
+    return render_template('login.html')
 
 @app.route('/logout')
 def logout():
@@ -119,14 +120,16 @@ def profile():
         gender = request.form['gender']
         looking_for = ','.join(request.form.getlist('looking_for'))
         location = request.form['location']
+        latitude = request.form['latitude']
+        longitude = request.form['longitude']
         about = request.form['about']
         email = request.form['email']
         tel = request.form['tel']
         instagram = request.form['instagram']
         telegram = request.form['telegram']
         
-        conn.execute('UPDATE users SET name = ?, age = ?, gender = ?, looking_for = ?, location = ?, about = ?, email = ?, tel = ?, instagram = ?, telegram = ? WHERE id = ?', 
-                     (name, age, gender, looking_for, location, about, email, tel, instagram, telegram, user_id))
+        conn.execute('UPDATE users SET name = ?, age = ?, gender = ?, looking_for = ?, location = ?, latitude = ?, longitude = ?, about = ?, email = ?, tel = ?, instagram = ?, telegram = ? WHERE id = ?', 
+                     (name, age, gender, looking_for, location, latitude, longitude, about, email, tel, instagram, telegram, user_id))
         conn.commit()
         
         photos = request.files.getlist('photos')
@@ -137,14 +140,15 @@ def profile():
                 conn.execute('INSERT INTO photos (user_id, filename) VALUES (?, ?)', (user_id, photo.filename))
                 conn.commit()
 
+        return jsonify(status='success')
+
     user = conn.execute('SELECT * FROM users WHERE id = ?', (user_id,)).fetchone()
-    locations = ['New York', 'Los Angeles', 'Chicago', 'Houston', 'Phoenix']  # Example locations
     user_photos = conn.execute('SELECT filename FROM photos WHERE user_id = ?', (user_id,)).fetchall()
     conn.close()
     return render_template('profile.html', user_name=user['name'], user_age=user['age'], user_gender=user['gender'], 
-                           user_looking_for=user['looking_for'] or '', user_location=user['location'], user_about=user['about'] or '',
-                           user_email=user['email'] or '', user_tel=user['tel'] or '', user_instagram=user['instagram'] or '', user_telegram=user['telegram'] or '',
-                           locations=locations, user_photos=user_photos)
+                           user_looking_for=user['looking_for'] or '', user_location=user['location'], user_latitude=user['latitude'], user_longitude=user['longitude'],
+                           user_about=user['about'] or '', user_email=user['email'] or '', user_tel=user['tel'] or '', user_instagram=user['instagram'] or '', user_telegram=user['telegram'] or '',
+                           user_photos=user_photos)
 
 @app.route('/browse')
 def browse():
@@ -352,17 +356,19 @@ def handle_photo_share_request(request_id, action):
 
     user_id = session['user_id']
     conn = get_db_connection()
+    user = conn.execute('SELECT * FROM users WHERE id = ?', (user_id,)).fetchone()
+    user_name=user['name']
     try:
         if action == 'accept':
             conn.execute('UPDATE photo_reveals SET status = ?, message = ? WHERE id = ?', ('accepted', None, request_id))
             requester_id = conn.execute('SELECT requester_id FROM photo_reveals WHERE id = ?', (request_id,)).fetchone()['requester_id']
             conn.execute('INSERT INTO photo_reveals (requester_id, requestee_id, status) VALUES (?, ?, ?)', (user_id, requester_id, 'accepted'))
-            message = f"Your photo reveal request to user {user_id} has been accepted."
+            message = f"Your photo reveal request to user {user_name} has been accepted."
             conn.execute('UPDATE photo_reveals SET message = ? WHERE requester_id = ? AND requestee_id = ?', (message, requester_id, user_id))
         elif action == 'decline':
             conn.execute('UPDATE photo_reveals SET status = ?, message = ? WHERE id = ?', ('declined', None, request_id))
             requester_id = conn.execute('SELECT requester_id FROM photo_reveals WHERE id = ?', (request_id,)).fetchone()['requester_id']
-            message = f"Your photo reveal request to user {user_id} has been declined."
+            message = f"Your photo reveal request to user {user_name} has been declined."
             conn.execute('UPDATE photo_reveals SET message = ? WHERE requester_id = ? AND requestee_id = ?', (message, requester_id, user_id))
         conn.commit()
     except Exception as e:
@@ -401,6 +407,44 @@ def handle_contact_share_request(request_id, action):
 
     return jsonify({'status': 'success'})
 
+@app.route('/acknowledge_notification/<int:notification_id>/<string:notification_type>', methods=['POST'])
+def acknowledge_notification(notification_id, notification_type):
+    if 'user_id' not in session:
+        return jsonify(status='error', message='Unauthorized'), 401
+
+    user_id = session['user_id']
+    conn = get_db_connection()
+    
+    # Attempt to update the notification message to "Acknowledged"
+    try:
+        if notification_type == 'photo':
+            conn.execute('UPDATE photo_reveals SET message = "Acknowledged" WHERE id = ? AND requester_id = ?', (notification_id, user_id))
+        elif notification_type == 'contact':
+            conn.execute('UPDATE contact_shares SET message = "Acknowledged" WHERE id = ? AND requester_id = ?', (notification_id, user_id))
+        conn.commit()
+    except Exception as e:
+        conn.close()
+        return jsonify(status='error', message=str(e)), 500
+    
+    conn.close()
+    return jsonify(status='success')
+
+@app.route('/notification_count')
+def notification_count():
+    if 'user_id' not in session:
+        return jsonify(count=0)
+
+    user_id = session['user_id']
+    conn = get_db_connection()
+    photo_reveal_count = conn.execute('SELECT COUNT(*) FROM photo_reveals WHERE requestee_id = ? AND status = "pending"', (user_id,)).fetchone()[0]
+    contact_share_count = conn.execute('SELECT COUNT(*) FROM contact_shares WHERE requestee_id = ? AND status = "pending"', (user_id,)).fetchone()[0]
+    photo_reveal_sent_count = conn.execute('SELECT COUNT(*) FROM photo_reveals WHERE requester_id = ? AND status <> "pending" AND message != "Acknowledged"', (user_id,)).fetchone()[0]
+    contact_share_sent_count = conn.execute('SELECT COUNT(*) FROM contact_shares WHERE requester_id = ? AND status <> "pending" AND message != "Acknowledged"', (user_id,)).fetchone()[0]
+    conn.close()
+    
+    total_count = photo_reveal_count + contact_share_count + photo_reveal_sent_count + contact_share_sent_count
+    return jsonify(count=total_count)
+
 @app.route('/notifications')
 def notifications():
     if 'user_id' not in session:
@@ -424,12 +468,12 @@ def notifications():
         WHERE contact_shares.requestee_id = ? AND contact_shares.status = 'pending'
     ''', (user_id,)).fetchall()
 
-    photo_reveal_notifications = conn.execute('SELECT message, id FROM photo_reveals WHERE requester_id = ? AND message IS NOT NULL ORDER BY id DESC', (user_id,)).fetchall()
-    contact_share_notifications = conn.execute('SELECT message, id FROM contact_shares WHERE requester_id = ? AND message IS NOT NULL ORDER BY id DESC', (user_id,)).fetchall()
+    photo_reveal_notifications = conn.execute('SELECT message, id, "photo" as type FROM photo_reveals WHERE requester_id = ? AND message IS NOT NULL AND message != "Acknowledged" ORDER BY id DESC', (user_id,)).fetchall()
+    contact_share_notifications = conn.execute('SELECT message, id, "contact" as type FROM contact_shares WHERE requester_id = ? AND message IS NOT NULL AND message != "Acknowledged" ORDER BY id DESC', (user_id,)).fetchall()
     notifications = photo_reveal_notifications + contact_share_notifications
     notifications.sort(key=lambda x: x['id'], reverse=True)
     conn.close()
-    return render_template('notifications.html', notifications=notifications,photo_reveals=photo_reveals, contact_shares=contact_shares)
+    return render_template('notifications.html', notifications=notifications, photo_reveals=photo_reveals, contact_shares=contact_shares)
 
 @app.context_processor
 def inject_notification_count():
@@ -438,11 +482,74 @@ def inject_notification_count():
         conn = get_db_connection()
         photo_reveal_count = conn.execute('SELECT COUNT(*) FROM photo_reveals WHERE requestee_id = ? AND status = "pending"', (user_id,)).fetchone()[0]
         contact_share_count = conn.execute('SELECT COUNT(*) FROM contact_shares WHERE requestee_id = ? AND status = "pending"', (user_id,)).fetchone()[0]
-        photo_reveal_sent_count = conn.execute('SELECT COUNT(*) FROM photo_reveals WHERE requester_id = ? AND status <> "pending"', (user_id,)).fetchone()[0]
-        contact_share_sent_count = conn.execute('SELECT COUNT(*) FROM contact_shares WHERE requester_id = ? AND status <> "pending"', (user_id,)).fetchone()[0]
+        photo_reveal_sent_count = conn.execute('SELECT COUNT(*) FROM photo_reveals WHERE requester_id = ? AND status <> "pending" AND message != "Acknowledged"', (user_id,)).fetchone()[0]
+        contact_share_sent_count = conn.execute('SELECT COUNT(*) FROM contact_shares WHERE requester_id = ? AND status <> "pending" AND message != "Acknowledged"', (user_id,)).fetchone()[0]
         conn.close()
         return {'notification_count': photo_reveal_count + contact_share_count + photo_reveal_sent_count + contact_share_sent_count }
     return {'notification_count': 0}
+
+@app.route('/contact', methods=['GET', 'POST'])
+def contact():
+    if request.method == 'POST':
+        name = request.form['name']
+        email = request.form['email']
+        message = request.form['message']
+        
+        conn = get_db_connection()
+        conn.execute('INSERT INTO contact_messages (name, email, message) VALUES (?, ?, ?)', 
+                     (name, email, message))
+        conn.commit()
+        conn.close()
+
+        return render_template('contact.html', success=True)
+    return render_template('contact.html')
+
+@app.route('/terms')
+def terms():
+    return render_template('terms.html')
+
+@app.route('/privacy')
+def privacy():
+    return render_template('privacy.html')
+
+@app.route('/admin/contact_messages')
+def view_contact_messages():
+    conn = get_db_connection()
+    messages = conn.execute('SELECT * FROM contact_messages').fetchall()
+    conn.close()
+    return render_template('admin_contact_messages.html', messages=messages)
+
+@app.route('/delete_data', methods=['POST'])
+def delete_data():
+    if 'user_id' not in session:
+        return redirect(url_for('login'))
+
+    user_id = session['user_id']
+    conn = get_db_connection()
+
+    try:
+        # Delete user's photos
+        conn.execute('DELETE FROM photos WHERE user_id = ?', (user_id,))
+        
+        # Delete user's contact messages
+        conn.execute('DELETE FROM contact_messages WHERE email = (SELECT email FROM users WHERE id = ?)', (user_id,))
+        
+        # Delete user's notifications
+        conn.execute('DELETE FROM photo_reveals WHERE requester_id = ? OR requestee_id = ?', (user_id, user_id))
+        conn.execute('DELETE FROM contact_shares WHERE requester_id = ? OR requestee_id = ?', (user_id, user_id))
+        
+        # Delete user's profile
+        conn.execute('DELETE FROM users WHERE id = ?', (user_id,))
+
+        conn.commit()
+        conn.close()
+
+        # Log the user out after deletion
+        session.pop('user_id', None)
+        return redirect(url_for('login'))
+    except Exception as e:
+        conn.close()
+        return jsonify(status='error', message=str(e)), 500
 
 if __name__ == '__main__':
     app.run(debug=True)

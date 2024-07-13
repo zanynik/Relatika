@@ -7,6 +7,18 @@
     {% endif %}
     <form action="/register" method="post" class="form-register">
         <div class="form-group">
+            <label for="username">Username:</label>
+            <input type="text" id="username" name="username" required>
+        </div>
+        <div class="form-group">
+            <label for="password">Password:</label>
+            <input type="password" id="password" name="password" required>
+        </div>
+        <div class="form-group">
+            <label for="confirm_password">Confirm Password:</label>
+            <input type="password" id="confirm_password" name="confirm_password" required>
+        </div>
+        <div class="form-group">
             <label for="name">Name:</label>
             <input type="text" id="name" name="name" required>
         </div>
@@ -25,30 +37,29 @@
         <div class="form-group">
             <label for="looking_for">Looking for:</label>
             <div class="checkbox-group">
-                <input type="checkbox" name="looking_for" value="M"> Male
-                <input type="checkbox" name="looking_for" value="F"> Female
-                <input type="checkbox" name="looking_for" value="O"> Doesn't matter
+                <input type="checkbox" id="looking_for_male" name="looking_for" value="M">
+                <label for="looking_for_male">Male</label>
+                <input type="checkbox" id="looking_for_female" name="looking_for" value="F">
+                <label for="looking_for_female">Female</label>
+                <input type="checkbox" id="looking_for_other" name="looking_for" value="O">
+                <label for="looking_for_other">Other</label>
             </div>
         </div>
-        <div class="form-group">
+        <div class="form-group" style="position: relative;">
             <label for="location">Location:</label>
             <input type="text" id="location" name="location" required>
+            <div id="autocomplete-suggestions" class="autocomplete-suggestions"></div>
         </div>
-        <div class="form-group">
-            <label for="username">Username:</label>
-            <input type="text" id="username" name="username" required>
-        </div>
-        <div class="form-group">
-            <label for="password">Password:</label>
-            <input type="password" id="password" name="password" required>
-        </div>
+        <input type="hidden" id="latitude" name="latitude">
+        <input type="hidden" id="longitude" name="longitude">
         <button type="submit" class="button">Register</button>
     </form>
+    <p class="login-link">Already have an account? <a href="/login">Login here</a>.</p>
 </div>
 
 <style>
 .register-container {
-    max-width: 600px;
+    max-width: 400px;
     margin: 2rem auto;
     padding: 2rem;
     background-color: #fff;
@@ -85,9 +96,13 @@ h2 {
     border-radius: 5px;
 }
 
-.checkbox-group {
+.form-register .checkbox-group {
     display: flex;
-    gap: 10px;
+    justify-content: space-between;
+}
+
+.form-register .checkbox-group label {
+    margin-right: 1rem;
 }
 
 .button {
@@ -104,5 +119,66 @@ h2 {
 .button:hover {
     background-color: #0056b3;
 }
+
+.login-link {
+    margin-top: 1rem;
+    display: block;
+}
+
+.autocomplete-suggestions {
+    position: absolute;
+    border: 1px solid #ccc;
+    background: #fff;
+    max-height: 150px;
+    overflow-y: auto;
+    z-index: 1000;
+    width: 100%;
+    top: calc(100% + 5px);
+}
+
+.autocomplete-suggestion {
+    padding: 10px;
+    cursor: pointer;
+}
+
+.autocomplete-suggestion:hover {
+    background-color: #e9e9e9;
+}
 </style>
+
+<script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
+<script src="https://unpkg.com/leaflet-geosearch@3.2.0/dist/bundle.min.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const provider = new window.GeoSearch.OpenStreetMapProvider();
+    const input = document.querySelector('#location');
+    const suggestionsContainer = document.querySelector('#autocomplete-suggestions');
+    const latitudeInput = document.querySelector('#latitude');
+    const longitudeInput = document.querySelector('#longitude');
+
+    input.addEventListener('input', (e) => {
+        if (!e.target.value) {
+            suggestionsContainer.innerHTML = '';
+            return;
+        }
+        provider.search({ query: e.target.value })
+            .then((results) => {
+                suggestionsContainer.innerHTML = results.map(result => `
+                    <div class="autocomplete-suggestion" data-lat="${result.y}" data-lng="${result.x}">
+                        ${result.label}
+                    </div>`).join('');
+            })
+            .catch((error) => console.error(error));
+    });
+
+    suggestionsContainer.addEventListener('click', (e) => {
+        if (e.target.classList.contains('autocomplete-suggestion')) {
+            input.value = e.target.innerText;
+            latitudeInput.value = e.target.getAttribute('data-lat');
+            longitudeInput.value = e.target.getAttribute('data-lng');
+            suggestionsContainer.innerHTML = '';
+        }
+    });
+});
+</script>
 {% endblock %}
