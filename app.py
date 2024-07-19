@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request, redirect, url_for, session, jsonify
+from flask import Flask, render_template, request, redirect, url_for, session, jsonify, g
 from werkzeug.security import generate_password_hash, check_password_hash
 import sqlite3
 from collections import Counter
@@ -29,6 +29,84 @@ def get_db_connection():
             else:
                 raise e
     raise Exception("Database is locked for too long, giving up.")
+
+@app.before_request
+def load_user():
+    user_id = session.get('user_id')
+    if user_id:
+        conn = get_db_connection()
+        g.user = conn.execute('SELECT * FROM users WHERE id = ?', (user_id,)).fetchone()
+        
+        # Load matches
+        all_users = conn.execute('SELECT * FROM users WHERE id != ?', (user_id,)).fetchall()
+
+        current_user_words = re.findall(r'\w+', (g.user['about'] or '').lower())
+        current_user_word_counts = Counter(current_user_words)
+
+        match_list = []
+        for user in all_users:
+            user_words = re.findall(r'\w+', (user['about'] or '').lower())
+            user_word_counts = Counter(user_words)
+            matches = sum((current_user_word_counts & user_word_counts).values())
+            total_words = len(set(current_user_words + user_words))
+            match_percentage = (matches / total_words) * 100 if total_words > 0 else 0
+            user_photo = conn.execute('SELECT filename FROM photos WHERE user_id = ?', (user['id'],)).fetchone()
+
+            # Check if the profile is saved
+            saved = conn.execute('SELECT 1 FROM saved_profiles WHERE user_id = ? AND profile_id = ?', (user_id, user['id'])).fetchone()
+
+            match_list.append({
+                'username': user['username'],
+                'name': user['name'],
+                'age' : user['age'],
+                'location' : user['location'],
+                'match_percentage': round(match_percentage, 2),
+                'user_id': user['id'],
+                'photo': user_photo['filename'] if user_photo else None,
+                'about_glimpse': ' '.join((user['about'] or '').split()[:10]) + '...',
+                'saved': bool(saved)
+            })
+ 
+        match_list.sort(key=lambda x: x['match_percentage'], reverse=True)
+        g.matches = match_list
+
+        # Load saved profiles
+        photo_reveals = conn.execute('SELECT requestee_id as user_id FROM photo_reveals WHERE requester_id = ?', (user_id,)).fetchall()
+        contact_shares = conn.execute('SELECT requestee_id as user_id FROM contact_shares WHERE requester_id = ?', (user_id,)).fetchall()
+        heart_likes = conn.execute('SELECT profile_id as user_id FROM saved_profiles WHERE user_id = ?', (user_id,)).fetchall()
+        saved_profiles = list({row['user_id'] for row in photo_reveals + contact_shares + heart_likes})
+
+        if saved_profiles:
+            placeholders = ', '.join(['?'] * len(saved_profiles))
+            users = conn.execute(f'SELECT id, name, age, location, about FROM users WHERE id IN ({placeholders})', tuple(saved_profiles)).fetchall()
+            users_list = [dict(user) for user in users]
+
+            for user in users_list:
+                photo = conn.execute('SELECT filename FROM photos WHERE user_id = ?', (user['id'],)).fetchone()
+                user['photo'] = photo['filename'] if photo else None
+
+            random.shuffle(users_list)
+        else:
+            users_list = []
+        g.saved_profiles = users_list
+        
+        # Load Notifications
+        photo_reveal_count = conn.execute('SELECT COUNT(*) FROM photo_reveals WHERE requestee_id = ? AND status = "pending"', (user_id,)).fetchone()[0]
+        contact_share_count = conn.execute('SELECT COUNT(*) FROM contact_shares WHERE requestee_id = ? AND status = "pending"', (user_id,)).fetchone()[0]
+        photo_reveal_sent_count = conn.execute('SELECT COUNT(*) FROM photo_reveals WHERE requester_id = ? AND status <> "pending" AND message != "Acknowledged"', (user_id,)).fetchone()[0]
+        contact_share_sent_count = conn.execute('SELECT COUNT(*) FROM contact_shares WHERE requester_id = ? AND status <> "pending" AND message != "Acknowledged"', (user_id,)).fetchone()[0]
+
+        g.notification_count = int(photo_reveal_count + contact_share_count + photo_reveal_sent_count + contact_share_sent_count)
+        conn.close()
+    else:
+        g.user = None
+        g.matches = []
+        g.saved_profiles = []
+        g.notification_count = 0
+
+@app.context_processor
+def inject_user():
+    return dict(user=g.user, matches=g.matches, saved_profiles=g.saved_profiles,notification_count = g.notification_count)
 
 @app.route('/')
 def home():
@@ -95,7 +173,7 @@ def login():
         if user and check_password_hash(user['password'], password):
             session['user_id'] = user['id']
             conn.close()
-            return redirect(url_for('profile'))
+            return redirect(url_for('browse'))
         else:
             conn.close()
             error = 'Invalid username or password'
@@ -156,20 +234,12 @@ def browse():
         return redirect(url_for('login'))
 
     conn = get_db_connection()
-    users = conn.execute('SELECT id, name, age, location, about FROM users').fetchall()
-    users_list = [dict(user) for user in users]
-
-    # Fetch photos for each user
-    for user in users_list:
-        photo = conn.execute('SELECT filename FROM photos WHERE user_id = ?', (user['id'],)).fetchone()
-        user['photo'] = photo['filename'] if photo else None
-
+    user = conn.execute('SELECT id, name, age, location, about FROM users ORDER BY RANDOM() LIMIT 1').fetchone()
+    # Fetch photos for random user
+    user_photos = conn.execute('SELECT filename FROM photos WHERE user_id = ?', (user['id'],)).fetchall()
     conn.close()
 
-    # Shuffle the list of users
-    random.shuffle(users_list)
-
-    return render_template('browse.html', users=users_list)
+    return render_template('browse.html', user=user, user_photos=user_photos)
 
 @app.route('/saved')
 def saved():
@@ -243,45 +313,22 @@ def delete_photo(filename):
 
     return jsonify({'status': 'success'})
 
-@app.route('/matches')
-def matches():
+@app.route('/next_random_profile')
+def next_random_profile():
     if 'user_id' not in session:
         return redirect(url_for('login'))
-
     user_id = session['user_id']
     conn = get_db_connection()
-    current_user = conn.execute('SELECT * FROM users WHERE id = ?', (user_id,)).fetchone()
-    all_users = conn.execute('SELECT * FROM users WHERE id != ?', (user_id,)).fetchall()
-
-    current_user_words = re.findall(r'\w+', (current_user['about'] or '').lower())
-    current_user_word_counts = Counter(current_user_words)
-
-    match_list = []
-    for user in all_users:
-        user_words = re.findall(r'\w+', (user['about'] or '').lower())
-        user_word_counts = Counter(user_words)
-        matches = sum((current_user_word_counts & user_word_counts).values())
-        total_words = len(set(current_user_words + user_words))
-        match_percentage = (matches / total_words) * 100 if total_words > 0 else 0
-        user_photo = conn.execute('SELECT filename FROM photos WHERE user_id = ?', (user['id'],)).fetchone()
-
-        # Check if the profile is saved
-        saved = conn.execute('SELECT 1 FROM saved_profiles WHERE user_id = ? AND profile_id = ?', (user_id, user['id'])).fetchone()
-
-        match_list.append({
-            'username': user['username'],
-            'name': user['name'],
-            'match_percentage': round(match_percentage, 2),
-            'user_id': user['id'],
-            'photo': user_photo['filename'] if user_photo else None,
-            'about_glimpse': ' '.join((user['about'] or '').split()[:10]) + '...',
-            'saved': bool(saved)
-        })
-
+    user = conn.execute('SELECT id FROM users WHERE id <> ? ORDER BY RANDOM() LIMIT 1', (user_id,)).fetchone()
     conn.close()
-    match_list.sort(key=lambda x: x['match_percentage'], reverse=True)
+    
+    return jsonify({'user_id': user['id']})
 
-    return render_template('matches.html', matches=match_list)
+@app.route('/send_superlike/<int:user_id>', methods=['POST'])
+def send_superlike(user_id):
+    send_photo_reveal_request(user_id)
+    send_contact_share_request(user_id)
+    return jsonify(status='success', message='Superlike sent.')
 
 @app.route('/view_profile/<int:user_id>', methods=['GET', 'POST'])
 def view_profile(user_id):
@@ -454,7 +501,7 @@ def notifications():
     conn = get_db_connection()
     # Get photo reveal requests sent to the current user
     photo_reveals = conn.execute('''
-        SELECT photo_reveals.id as request_id, users.username, photo_reveals.status 
+        SELECT photo_reveals.requester_id, users.username, users.name, photo_reveals.status 
         FROM photo_reveals 
         JOIN users ON photo_reveals.requester_id = users.id 
         WHERE photo_reveals.requestee_id = ? AND photo_reveals.status = 'pending'
@@ -462,7 +509,7 @@ def notifications():
 
     # Get contact share requests sent to the current user
     contact_shares = conn.execute('''
-        SELECT contact_shares.id as request_id, users.username, contact_shares.status 
+        SELECT contact_shares.requester_id, users.username, users.name, contact_shares.status 
         FROM contact_shares 
         JOIN users ON contact_shares.requester_id = users.id 
         WHERE contact_shares.requestee_id = ? AND contact_shares.status = 'pending'
@@ -474,19 +521,6 @@ def notifications():
     notifications.sort(key=lambda x: x['id'], reverse=True)
     conn.close()
     return render_template('notifications.html', notifications=notifications, photo_reveals=photo_reveals, contact_shares=contact_shares)
-
-@app.context_processor
-def inject_notification_count():
-    if 'user_id' in session:
-        user_id = session['user_id']
-        conn = get_db_connection()
-        photo_reveal_count = conn.execute('SELECT COUNT(*) FROM photo_reveals WHERE requestee_id = ? AND status = "pending"', (user_id,)).fetchone()[0]
-        contact_share_count = conn.execute('SELECT COUNT(*) FROM contact_shares WHERE requestee_id = ? AND status = "pending"', (user_id,)).fetchone()[0]
-        photo_reveal_sent_count = conn.execute('SELECT COUNT(*) FROM photo_reveals WHERE requester_id = ? AND status <> "pending" AND message != "Acknowledged"', (user_id,)).fetchone()[0]
-        contact_share_sent_count = conn.execute('SELECT COUNT(*) FROM contact_shares WHERE requester_id = ? AND status <> "pending" AND message != "Acknowledged"', (user_id,)).fetchone()[0]
-        conn.close()
-        return {'notification_count': photo_reveal_count + contact_share_count + photo_reveal_sent_count + contact_share_sent_count }
-    return {'notification_count': 0}
 
 @app.route('/contact', methods=['GET', 'POST'])
 def contact():
@@ -503,6 +537,11 @@ def contact():
 
         return render_template('contact.html', success=True)
     return render_template('contact.html')
+
+@app.route('/ai_suggestions')
+def ai_suggestions():
+    return render_template('ai_suggestions.html', matches=g.matches, user=g.user)
+
 
 @app.route('/terms')
 def terms():
@@ -550,6 +589,13 @@ def delete_data():
     except Exception as e:
         conn.close()
         return jsonify(status='error', message=str(e)), 500
+    
+@app.route('/contact_faqs')
+def contact_faqs():
+    if 'user_id' not in session:
+        return redirect(url_for('login'))
+    return render_template('contact_faqs.html')
+
 
 if __name__ == '__main__':
     app.run(debug=True)

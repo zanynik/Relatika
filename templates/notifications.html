@@ -1,36 +1,93 @@
 {% extends "base.html" %}
+
 {% block content %}
-<h2>Notifications</h2>
-<h3>Incoming</h3>
-<ul>
-    {% for request in photo_reveals %}
-        <li>
-            {{ request.username }} wants to view your photos.
-            <button class="accept-request" data-request-id="{{ request.request_id }}" data-request-type="photo">Accept</button>
-            <button class="decline-request" data-request-id="{{ request.request_id }}" data-request-type="photo">Decline</button>
-        </li>
-    {% endfor %}
-</ul>
-<ul>
-    {% for request in contact_shares %}
-        <li>
-            {{ request.username }} wants to view your contact details.
-            <button class="accept-request" data-request-id="{{ request.request_id }}" data-request-type="contact">Accept</button>
-            <button class="decline-request" data-request-id="{{ request.request_id }}" data-request-type="contact">Decline</button>
-        </li>
-    {% endfor %}
-</ul>
-<h3>Outgoing</h3>
-<ul>
-    {% for notification in notifications %}
-        <li>
-            {{ notification['message'] }}
-            {% if 'Acknowledged' not in notification['message'] %}
-            <button class="acknowledge-notification" data-notification-id="{{ notification['id'] }}" data-notification-type="{{ notification['type'] }}">Ok</button>
-            {% endif %}
-        </li>
-    {% endfor %}
-</ul>
+<style>
+    .notification-container {
+        max-width: 800px;
+        margin: 0 auto;
+        padding: 20px;
+        background-color: #f9f9f9;
+        border-radius: 10px;
+        box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+    }
+    .notification-container h2, .notification-container h3 {
+        color: #333;
+    }
+    .notification-container ul {
+        list-style-type: none;
+        padding: 0;
+    }
+    .notification-container li {
+        background-color: #fff;
+        margin: 10px 0;
+        padding: 15px;
+        border-radius: 5px;
+        box-shadow: 0 0 5px rgba(0, 0, 0, 0.1);
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+    .notification-container button {
+        margin-left: 10px;
+        padding: 5px 10px;
+        border: none;
+        border-radius: 3px;
+        cursor: pointer;
+    }
+    .accept-request {
+        background-color: #4CAF50;
+        color: white;
+    }
+    .decline-request {
+        background-color: #f44336;
+        color: white;
+    }
+    .acknowledge-notification {
+        background-color: #2196F3;
+        color: white;
+    }
+</style>
+
+<div class="notification-container">
+    <h2>Notifications</h2>
+
+    <h3>Incoming</h3>
+    <ul>
+        {% for request in photo_reveals %}
+            <li>
+                <span><a href="{{ url_for('view_profile', user_id=request.requester_id) }}">{{ request.name }}</a> wants to view your photos.</span>
+                <div>
+                    <button class="accept-request" data-request-id="{{ request.requester_id }}" data-request-type="photo">Accept</button>
+                    <button class="decline-request" data-request-id="{{ request.requester_id }}" data-request-type="photo">Decline</button>
+                </div>
+            </li>
+        {% endfor %}
+    </ul>
+    <ul>
+        {% for request in contact_shares %}
+            <li>
+                <span>{{ request.name }} wants to view your contact details.</span>
+                <div>
+                    <button class="accept-request" data-request-id="{{ request.requester_id }}" data-request-type="contact">Accept</button>
+                    <button class="decline-request" data-request-id="{{ request.requester_id }}" data-request-type="contact">Decline</button>
+                </div>
+            </li>
+        {% endfor %}
+    </ul>
+
+    <h3>Outgoing</h3>
+    <ul>
+        {% for notification in notifications %}
+            <li>
+                <span>{{ notification['message'] }}</span>
+                {% if 'Acknowledged' not in notification['message'] %}
+                <button class="acknowledge-notification" data-notification-id="{{ notification['id'] }}" data-notification-type="{{ notification['type'] }}">Ok</button>
+                {% endif %}
+            </li>
+        {% endfor %}
+    </ul>
+</div>
+
 <script>
 document.querySelectorAll('.accept-request').forEach(button => {
     button.addEventListener('click', function() {

@@ -1,47 +1,259 @@
 {% extends "base.html" %}
 {% block content %}
-<h2>Browse Profiles</h2>
-<div class="grid-container">
-    {% for user in users %}
-    <div class="grid-item" onclick="location.href='/view_profile/{{ user.id }}'">
-        <div class="profile">
-            <div class="profile-photo">
-                {% if user.photo %}
-                <img src="{{ url_for('static', filename='uploads/' ~ user.photo) }}" alt="User Photo" style="width:100px; height:100px; filter: blur(5px);">
-                {% else %}
-                <img src="{{ url_for('static', filename='placeholder.png') }}" alt="Placeholder Photo" style="width:100px; height:100px;">
-                {% endif %}
-            </div>
-            <div class="profile-info">
-                <h3>{{ user.name }}</h3>
-                <p>Age: {{ user.age }}</p>
-                <p>Location: {{ user.location }}</p>
-                <p>{{ user.about[:50] if user.about else 'No description available' }}...</p>
-            </div>
-        </div>
+<div class="profile-container" id="profile-container">
+    <div class="profile-header">
+        <h2>{{ user.name }}</h2>
+        <p>Age: {{ user.age }}</p>
+        <p>Location: {{ user.location }}</p>
     </div>
-    {% endfor %}
+
+    <div class="profile-content">
+        <h3>About</h3>
+        <p>{{ user.about }}</p>
+
+        {% if user_photos %}
+        <h3>Photos</h3>
+        <div class="photo-gallery">
+            {% for photo in user_photos %}
+            <div class="photo-container">
+                <img src="{{ url_for('static', filename='uploads/' ~ photo['filename']) }}" alt="User Photo" 
+                    class="user-photo" 
+                    style="{% if photo_reveal_status != 'accepted' %}filter: blur(5px);{% endif %}">
+            </div>
+            {% endfor %}
+        </div>
+        {% endif %}
+    </div>
+
+    <div class="action-buttons">
+        <button id="dislike-button" class="action-button dislike">❌</button>
+        <button id="superlike-button" class="action-button superlike">⭐</button>
+        <button id="like-button" class="action-button like">❤️</button>
+    </div>
 </div>
+
+<div id="superlike-popup" class="popup">
+    <div class="popup-content">
+        <span class="close-popup">&times;</span>
+        <h3>Send a message with your Super Like</h3>
+        <textarea id="superlike-message" rows="4" placeholder="Type your message here..."></textarea>
+        <button id="send-superlike" class="action-button">Send Super Like</button>
+    </div>
+</div>
+
+<script>
+document.getElementById('dislike-button').addEventListener('click', function() {
+    fetch(`/next_random_profile`)
+        .then(response => response.json())
+        .then(data => {
+            window.location.href = `/view_profile/${data.user_id}`;
+        });
+});
+
+document.getElementById('like-button').addEventListener('click', function() {
+    const userId = {{ user.id }};
+    fetch(`/send_photo_reveal_request/${userId}`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ user_id: userId })
+    }).then(response => response.json()).then(data => {
+        if (data.status === 'success') {
+            alert(data.message);
+            fetch(`/next_random_profile`)
+                .then(response => response.json())
+                .then(data => {
+                    window.location.href = `/view_profile/${data.user_id}`;
+                });
+        } else {
+            alert(data.message);
+        }
+    }).catch(error => {
+        console.error('Error:', error);
+    });
+});
+
+document.getElementById('superlike-button').addEventListener('click', function() {
+    document.getElementById('superlike-popup').style.display = 'block';
+});
+
+document.querySelector('.close-popup').addEventListener('click', function() {
+    document.getElementById('superlike-popup').style.display = 'none';
+});
+
+document.getElementById('send-superlike').addEventListener('click', function() {
+    const userId = {{ user.id }};
+    const message = document.getElementById('superlike-message').value;
+    fetch(`/send_superlike/${userId}`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ user_id: userId, message: message })
+    }).then(response => response.json()).then(data => {
+        if (data.status === 'success') {
+            alert(data.message);
+            document.getElementById('superlike-popup').style.display = 'none';
+            fetch(`/next_random_profile`)
+                .then(response => response.json())
+                .then(data => {
+                    window.location.href = `/view_profile/${data.user_id}`;
+                });
+        } else {
+            alert(data.message);
+        }
+    }).catch(error => {
+        console.error('Error:', error);
+    });
+});
+</script>
+
 <style>
-.grid-container {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-    gap: 20px;
-}
-.grid-item {
-    border: 1px solid #ccc;
-    padding: 10px;
-    border-radius: 5px;
+@import url('https://fonts.googleapis.com/css2?family=Merriweather:wght@300;700&display=swap');
+
+body {
+    font-family: 'Merriweather', serif;
     background-color: #f9f9f9;
+    color: #333;
+}
+
+.profile-container {
+    max-width: 800px;
+    margin: 3rem auto;
+    padding: 2rem;
+    background-color: #fff;
+    border-radius: 15px;
+    box-shadow: 0 0 20px rgba(0, 0, 0, 0.1);
+    text-align: left;
+}
+
+.profile-header {
     text-align: center;
+    margin-bottom: 2rem;
+}
+
+.profile-header h2 {
+    font-size: 2.5rem;
+    margin-bottom: 0.5rem;
+}
+
+.profile-header p {
+    margin: 0.3rem 0;
+    font-size: 1.2rem;
+    color: #555;
+}
+
+.profile-content h3 {
+    font-size: 1.8rem;
+    margin-bottom: 1rem;
+}
+
+.profile-content p {
+    font-size: 1.1rem;
+    line-height: 1.6;
+}
+
+.photo-gallery {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 15px;
+    margin-top: 1rem;
+}
+
+.photo-container {
+    position: relative;
+    flex: 0 0 calc(33.333% - 15px);
+    border-radius: 10px;
+    overflow: hidden;
+}
+
+.user-photo {
+    width: 100%;
+    height: 200px;
+    object-fit: cover;
+}
+
+.action-buttons {
+    display: flex;
+    justify-content: space-around;
+    margin-top: 2rem;
+}
+
+.action-button {
+    background-color: #ff4b2b;
+    color: white;
+    border: none;
+    border-radius: 50%;
+    padding: 15px;
+    cursor: pointer;
+    font-size: 1.5rem;
+    transition: background-color 0.3s ease;
+    width: 60px;
+    height: 60px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.action-button.like {
+    background-color: #4CAF50;
+}
+
+.action-button.superlike {
+    background-color: #2196F3;
+}
+
+.action-button:hover {
+    opacity: 0.8;
+}
+
+.popup {
+    display: none;
+    position: fixed;
+    z-index: 1;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    overflow: auto;
+    background-color: rgb(0,0,0);
+    background-color: rgba(0,0,0,0.4);
+    padding-top: 60px;
+}
+
+.popup-content {
+    background-color: #fefefe;
+    margin: 5% auto;
+    padding: 20px;
+    border: 1px solid #888;
+    width: 80%;
+    max-width: 500px;
+    border-radius: 10px;
+    text-align: center;
+}
+
+.close-popup {
+    color: #aaa;
+    float: right;
+    font-size: 28px;
+    font-weight: bold;
+}
+
+.close-popup:hover,
+.close-popup:focus {
+    color: black;
+    text-decoration: none;
     cursor: pointer;
 }
-.grid-item:hover {
-    border: 2px solid olive;
-}
-.profile-photo img {
-    border-radius: 50%;
-    margin-bottom: 10px;
+
+#superlike-message {
+    width: 100%;
+    margin-top: 10px;
+    padding: 10px;
+    border-radius: 5px;
+    border: 1px solid #ccc;
 }
 </style>
 {% endblock %}

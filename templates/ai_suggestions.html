@@ -1,0 +1,83 @@
+{% extends "base.html" %}
+{% block content %}
+<h2>Top AI Suggestions</h2>
+<div class="grid-container">
+    {% for match in matches %}
+    <div class="grid-item" onclick="location.href='/view_profile/{{ match.user_id }}'">
+        <div class="ai-summary-box">
+            ✨ They are a good match for you ✨
+        </div>
+        <h3>{{ match.name }}</h3>
+        <p class="ai-match">AI Match: {{ match.match_percentage }}%</p>
+        <p>Age: {{ match.age }}</p>
+        <h4>About</h4>
+        <p>{{ match.about_glimpse[:100] }}...</p>
+        <div class="photo-gallery">
+        <div class="photo-container">
+            <img src="{{ url_for('static', filename='uploads/' ~ match.photo) if match.photo else url_for('static', filename='placeholder.png') }}" alt="User Photo">
+        </div>
+        </div>
+        <p>Location: {{ match.location }}</p>
+    </div>
+    {% endfor %}
+</div>
+
+<style>
+    .grid-container {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+        gap: 20px;
+    }
+
+    .grid-item {
+        background-color: #fff;
+        border-radius: 10px;
+        box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        overflow: hidden;
+        text-align: center;
+        padding: 1rem;
+        cursor: pointer;
+        position: relative;
+    }
+
+    .grid-item:hover {
+        box-shadow: 0 0 15px rgba(0, 0, 0, 0.2);
+    }
+
+    .ai-summary-box {
+        background-color: #f0f8ff;
+        padding: 0.5rem;
+        border-radius: 5px;
+        margin-bottom: 10px;
+        font-size: 0.9rem;
+        color: #007bff;
+    }
+
+    .grid-item h3, .grid-item p {
+        margin: 10px 0;
+    }
+
+    .grid-item .ai-match {
+        font-size: 1.2rem;
+        color: #ff4b2b;
+    }
+
+    .photo-gallery {
+        display: flex;
+        justify-content: center;
+        gap: 5px;
+        margin-top: 10px;
+    }
+
+    .photo-container {
+        flex: 0 0 auto;
+    }
+
+    .photo-container img {
+        width: 50px;
+        height: 50px;
+        object-fit: cover;
+        border-radius: 5px;
+    }
+</style>
+{% endblock %}

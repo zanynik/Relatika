@@ -6,98 +6,269 @@
     <title>Relatika</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
     <style>
+        @import url('https://fonts.googleapis.com/css2?family=Merriweather:wght@300;700&display=swap');
+
         body {
-            font-family: 'Arial', sans-serif;
+            font-family: 'Merriweather', serif;
             margin: 0;
             padding: 0;
-            background-color: #f5f5f5;
+            background-color: #f9f9f9;
             color: #333;
-        }
-        nav {
-            background-color: #007bff;
-            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-            padding: 1rem 2rem;
             display: flex;
-            justify-content: space-between;
-            align-items: center;
-            color: white;
+            overflow: hidden; /* Prevent extra scrolling */
         }
-        nav .logo {
-            font-size: 1.5rem;
-            font-weight: bold;
-            color: white;
-        }
-        nav .nav-links {
-            display: flex;
-            align-items: center;
-        }
-        nav a {
-            color: white;
-            text-decoration: none;
-            margin: 0 1rem;
-            padding: 0.5rem;
-            transition: color 0.3s ease, background-color 0.3s ease;
-        }
-        nav a:hover {
-            background-color: #0056b3;
-            border-radius: 4px;
-        }
-        .container {
-            max-width: 1200px;
-            margin: 2rem auto;
-            padding: 0 1rem;
-            background-color: white;
-            border-radius: 10px;
+
+        .sidebar {
+            width: 300px;
+            background-color: #fff;
+            border-right: 1px solid #ccc;
+            height: 100vh;
+            position: fixed;
             box-shadow: 0 0 15px rgba(0, 0, 0, 0.1);
-            padding: 2rem;
+            display: flex;
+            flex-direction: column;
+            padding-top: 1rem;
         }
-        .container h1, .container h2, .container h3, .container p {
+
+        .sidebar-fixed {
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+            background-color: #fff;
+        }
+
+        .user-thumbnail {
+            display: flex;
+            align-items: center;
+            padding: 1rem;
+            cursor: pointer;
+            position: relative;
+        }
+
+        .user-thumbnail img {
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            margin-right: 1rem;
+        }
+
+        .sidebar h2 {
+            text-align: center;
+            padding: 1rem;
+            border-bottom: 1px solid #ccc;
+        }
+
+        .sidebar .menu {
+            list-style: none;
+            padding: 0;
+            flex: 1;
+        }
+
+        .sidebar .menu li {
+            padding: 1rem;
+            text-align: center;
+            border-bottom: 1px solid #ccc;
+        }
+
+        .sidebar .menu li a {
+            text-decoration: none;
+            color: #333;
+            display: block;
+        }
+
+        .sidebar .menu li a:hover {
+            background-color: #f5f5f5;
+        }
+
+        .sidebar .matches {
+            padding: 1rem;
+            overflow-y: auto;
+            flex: 1;
+            max-height: calc(100vh - 200px); /* Adjust this value based on the height of the fixed elements */
+        }
+
+        .sidebar .match {
+            display: flex;
+            align-items: center;
+            padding: 0.5rem 0;
+            cursor: pointer;
+        }
+
+        .sidebar .match img {
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            margin-right: 1rem;
+        }
+
+        .content {
+            margin-left: 300px;
+            padding: 2rem;
+            flex: 1;
+            overflow-y: auto;
+        }
+
+        .content h2 {
             margin-bottom: 1.5rem;
         }
-        footer {
-            background-color: #007bff;
-            color: white;
+
+        .back-to-meeting {
+            padding: 1rem;
+            border-bottom: 1px solid #ccc;
+            cursor: pointer;
             text-align: center;
-            padding: 1rem 0;
         }
-        footer a {
+
+        .back-to-meeting:hover {
+            background-color: #f5f5f5;
+        }
+
+        .notification {
+            padding: 1rem;
+            border-bottom: 1px solid #ccc;
+            cursor: pointer;
+            text-align: center;
+        }
+
+        .notification:hover {
+            background-color: #f5f5f5;
+        }
+
+        .ai-suggestion-button {
+            background-color: #ff4b2b;
             color: white;
-            text-decoration: none;
-            margin: 0 1rem;
-            transition: color 0.3s ease, background-color 0.3s ease;
+            border: none;
+            border-radius: 25px;
+            padding: 10px 20px;
+            cursor: pointer;
+            margin: 2rem auto;
+            display: block;
+            font-size: 1rem;
+            transition: background-color 0.3s ease;
+            text-align: center;
+            width: 80%;
         }
-        footer a:hover {
-            background-color: #0056b3;
-            border-radius: 4px;
-            padding: 0.2rem 0.5rem;
+
+        .ai-suggestion-button:hover {
+            background-color: #ff7e5f;
+        }
+
+        .grid-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+            gap: 20px;
+        }
+
+        .grid-item {
+            background-color: #fff;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+            text-align: center;
+            padding: 1rem;
+        }
+
+        .grid-item img {
+            width: 100%;
+            height: 200px;
+            object-fit: cover;
+            border-bottom: 1px solid #ccc;
+        }
+
+        .grid-item h3, .grid-item p {
+            margin: 10px 0;
+        }
+
+        .grid-item .ai-match {
+            font-size: 1.2rem;
+            color: #ff4b2b;
+        }
+
+        .header {
+            text-align: center;
+            padding: 0;
+            position: fixed;
+            top: 0;
+            left: 300px;
+            width: calc(100% - 300px);
+            background-color: #fff;
+            z-index: 1000;
+            box-shadow: 0 0 15px rgba(0, 0, 0, 0.1);
+        }
+
+        .header h1 {
+            margin: 0;
+            font-size: 2rem;
         }
     </style>
 </head>
 <body>
-    <nav>
-        <div class="logo">Relatika</div>
-        <div class="nav-links">
-            <a href="/">Home</a>
-            {% if session['user_id'] %}
-                <a href="/profile">Profile</a>
-                <a href="/matches">Matches</a>
-                <a href="/browse">Browse</a>
-                <a href="/saved">Saved</a>
-                <a href="/notifications">Notifications {% if notification_count and notification_count > 0 %} ({{ notification_count }}) {% endif %}</a>
-                <a href="/logout">Logout</a>
-            {% else %}
-                <a href="/login">Login</a>
-            {% endif %}
+    <div class="sidebar" id="sidebar">
+        <div class="sidebar-fixed" id="sidebar-content">
+            <div class="user-thumbnail" onclick="showUserMenu()">
+                <img src="{{ url_for('static', filename='uploads/' ~ user.photo) if user.photo else url_for('static', filename='placeholder.png') }}" alt="User Photo">
+                <span>{{ user.name }}</span>
+            </div>
+            <div id="menu-content">
+                {% if not request.path.startswith('/view_profile/') %}
+                <div id="meet" class="back-to-meeting">
+                    Back to meeting new people >
+                </div>
+                {% endif %}
+                {% if request.path != '/notifications' and notification_count and notification_count > 0 %}
+                <div class="notification" onclick="location.href='/notifications'">
+                    Checkout your ({{ notification_count }}) notifications
+                </div>
+                {% endif %}
+                <button class="ai-suggestion-button" onclick="location.href='/ai_suggestions'">✨Top AI Suggestions✨</button>
+                <div class="matches">
+                    <h4>Matched</h4>
+                    {% for match in matches %}
+                    <div class="match" onclick="location.href='/view_profile/{{ match.user_id }}'">
+                        <img src="{{ url_for('static', filename='uploads/' ~ match.photo) if match.photo else url_for('static', filename='placeholder.png') }}" alt="User Photo">
+                        <div>
+                            <p>{{ match.name }}</p>
+                            <p>{{ match.about_glimpse[:30] }}</p>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
         </div>
-    </nav>
-    <div class="container">
+    </div>
+    <div class="header">
+        <h1>Relatika</h1>
+    </div>
+    <div class="content" id="content">
         {% block content %}
         {% endblock %}
     </div>
-    <footer>
-        <a href="/contact">Contact</a>
-        <a href="/terms">Terms and Conditions</a>
-        <a href="/privacy">Privacy Policy</a>
-    </footer>
+
+    <script>
+        function showUserMenu() {
+            const sidebarContent = document.getElementById('sidebar-content');
+            sidebarContent.innerHTML = `
+                <div class="user-thumbnail" onclick="location.href='/view_profile/{{ user.id }}'">
+                    <img src="{{ url_for('static', filename='uploads/' ~ user.photo) if user.photo else url_for('static', filename='placeholder.png') }}" alt="User Photo">
+                    <span>{{ user.name }}</span>
+                </div>
+                <div class="menu">
+                    <li><a href="/view_profile/{{ user.id }}">View Profile</a></li>
+                    <li><a href="/profile">Edit Profile</a></li>
+                    <li><a href="/notifications">Notifications {% if notification_count and notification_count > 0 %} ({{ notification_count }}) {% endif %}</a></li>
+                    <li><a href="/contact_faqs">Contact and FAQs</a></li>
+                    <li><a href="/logout">Logout</a></li>
+                    <li><a href="/browse">Back</a></li>                        
+                </div>
+            `;
+        }
+        document.getElementById('meet').addEventListener('click', function() {
+            fetch(`/next_random_profile`)
+                .then(response => response.json())
+                .then(data => {
+                    window.location.href = `/view_profile/${data.user_id}`;
+                });
+        });
+    </script>
 </body>
 </html>
