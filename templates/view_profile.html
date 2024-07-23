@@ -25,16 +25,10 @@
         </div>
         {% endif %}
 
-        {% if photo_reveal_status == 'none' and g.user['name'] != user_name %}
-        <button id="send-photo-reveal-request" class="action-button" data-user-id="{{ user_id }}">Send Photo Reveal Request</button>
-        {% endif %}
         {% if photo_reveal_status == 'pending' and g.user['name'] != user_name %}
         <p class="status-message pending">Photo reveal request is pending...</p>
         {% endif %}
 
-        {% if contact_share_status == 'none' and g.user['name'] != user_name %}
-        <button id="send-contact-share-request" class="action-button" data-user-id="{{ user_id }}">Send Contact Reveal Request</button>
-        {% endif %}
         {% if contact_share_status == 'pending' and g.user['name'] != user_name %}
         <p class="status-message pending">Contact share request is pending...</p>
         {% endif %}
@@ -46,11 +40,16 @@
         <p>Telegram: {{ user_telegram }}</p>
         {% endif %}
     </div>
-    {% if g.user['name'] != user_name %}
+    {% if g.user['name'] != user_name and photo_reveal_status != 'accepted' and contact_share_status != 'accepted' %}
     <div class="fixed-action-buttons">
-        <button id="dislike-button" class="action-button dislike">❌</button>
-        <button id="superlike-button" class="action-button superlike">Send Message</button>
-        <button id="like-button" class="action-button like">❤️</button>
+        <button id="superlike-button" class="action-button superlike">⭐</button>
+        {% if photo_reveal_status != 'pending' and contact_share_status != 'pending' %}
+        <button id="like-button1" class="action-button like">❤️1</button>
+        {% endif %}
+        {% if photo_reveal_status != 'none' and contact_share_status != 'pending' %}
+        <button id="like-button2" class="action-button like">💜2</button>
+        {% endif %}
+        <button id="dislike-button" class="action-button dislike">Next</button>
     </div>
     {% else %}
     <div class="edit-profile-button">
@@ -69,58 +68,6 @@
 </div>
 
 <script>
-document.getElementById('send-photo-reveal-request')?.addEventListener('click', function() {
-    const userId = this.getAttribute('data-user-id');
-    console.log('Sending photo reveal request to user ID:', userId);
-    if (!userId) {
-        console.error('User ID is not set.');
-        return;
-    }
-    fetch(`/send_photo_reveal_request/${userId}`, {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({ user_id: userId })
-    }).then(response => response.json()).then(data => {
-        console.log('Response from server:', data);
-        if (data.status === 'success') {
-            alert(data.message);
-            location.reload();
-        } else {
-            alert(data.message);
-        }
-    }).catch(error => {
-        console.error('Error:', error);
-    });
-});
-
-document.getElementById('send-contact-share-request')?.addEventListener('click', function() {
-    const userId = this.getAttribute('data-user-id');
-    console.log('Sending contact share request to user ID:', userId);
-    if (!userId) {
-        console.error('User ID is not set.');
-        return;
-    }
-    fetch(`/send_contact_share_request/${userId}`, {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({ user_id: userId })
-    }).then(response => response.json()).then(data => {
-        console.log('Response from server:', data);
-        if (data.status === 'success') {
-            alert(data.message);
-            location.reload();
-        } else {
-            alert(data.message);
-        }
-    }).catch(error => {
-        console.error('Error:', error);
-    });
-});
-
 document.getElementById('dislike-button').addEventListener('click', function() {
     fetch(`/next_random_profile`)
         .then(response => response.json())
@@ -129,7 +76,7 @@ document.getElementById('dislike-button').addEventListener('click', function() {
         });
 });
 
-document.getElementById('like-button').addEventListener('click', function() {
+document.getElementById('like-button1').addEventListener('click', function() {
     const userId = {{ user_id }};
     fetch(`/send_photo_reveal_request/${userId}`, {
         method: 'POST',
@@ -140,11 +87,6 @@ document.getElementById('like-button').addEventListener('click', function() {
     }).then(response => response.json()).then(data => {
         if (data.status === 'success') {
             alert(data.message);
-            fetch(`/next_random_profile`)
-                .then(response => response.json())
-                .then(data => {
-                    window.location.href = `/view_profile/${data.user_id}`;
-                });
         } else {
             alert(data.message);
         }
@@ -152,6 +94,26 @@ document.getElementById('like-button').addEventListener('click', function() {
         console.error('Error:', error);
     });
 });
+
+document.getElementById('like-button2')?.addEventListener('click', function() {
+    const userId = {{ user_id }};
+    fetch(`/send_contact_share_request/${userId}`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ user_id: userId })
+    }).then(response => response.json()).then(data => {
+        if (data.status === 'success') {
+            alert(data.message);
+        } else {
+            alert(data.message);
+        }
+    }).catch(error => {
+        console.error('Error:', error);
+    });
+});
+
 
 document.getElementById('superlike-button').addEventListener('click', function() {
     document.getElementById('superlike-popup').style.display = 'block';
@@ -195,7 +157,6 @@ body {
     font-family: 'Merriweather', serif;
     background-color: #f9f9f9;
     color: #333;
-    overflow: hidden; /* Prevent extra scrolling */
 }
 
 .profile-container {
@@ -206,8 +167,6 @@ body {
     border-radius: 15px;
     box-shadow: 0 0 20px rgba(0, 0, 0, 0.1);
     text-align: left;
-    overflow-y: auto;
-    max-height: calc(100vh - 120px); /* Adjust as needed */
 }
 
 .profile-header {
