@@ -542,6 +542,13 @@ def contact():
 def ai_suggestions():
     return render_template('ai_suggestions.html', matches=g.matches, user=g.user)
 
+@app.route('/matches')
+def matches():
+    return render_template('matches.html', matches=g.matches, user=g.user)
+
+@app.route('/settings')
+def settings():
+    return render_template('settings.html', user=g.user)
 
 @app.route('/terms')
 def terms():

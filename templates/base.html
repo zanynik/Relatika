@@ -15,142 +15,73 @@
             background-color: #f9f9f9;
             color: #333;
             display: flex;
-            overflow: hidden; /* Prevent extra scrolling */
-        }
-
-        .sidebar {
-            width: 300px;
-            background-color: #fff;
-            border-right: 1px solid #ccc;
-            height: 100vh;
-            position: fixed;
-            box-shadow: 0 0 15px rgba(0, 0, 0, 0.1);
-            display: flex;
             flex-direction: column;
-            padding-top: 1rem;
+            min-height: 100vh;
         }
 
-        .sidebar-fixed {
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0.5rem 1rem;
+            background-color: #fff;
+            box-shadow: 0 0 15px rgba(0, 0, 0, 0.1);
             position: sticky;
             top: 0;
             z-index: 1000;
-            background-color: #fff;
         }
 
-        .user-thumbnail {
+        .header .left {
             display: flex;
             align-items: center;
-            padding: 1rem;
-            cursor: pointer;
-            position: relative;
-        }
-
-        .user-thumbnail img {
-            border-radius: 50%;
-            width: 50px;
-            height: 50px;
-            margin-right: 1rem;
-        }
-
-        .sidebar h2 {
-            text-align: center;
-            padding: 1rem;
-            border-bottom: 1px solid #ccc;
-        }
-
-        .sidebar .menu {
-            list-style: none;
-            padding: 0;
-            flex: 1;
-        }
-
-        .sidebar .menu li {
-            padding: 1rem;
-            text-align: center;
-            border-bottom: 1px solid #ccc;
-        }
-
-        .sidebar .menu li a {
-            text-decoration: none;
-            color: #333;
-            display: block;
-        }
-
-        .sidebar .menu li a:hover {
-            background-color: #f5f5f5;
-        }
-
-        .sidebar .matches {
-            padding: 1rem;
-            overflow-y: auto;
-            flex: 1;
-            max-height: calc(100vh - 200px); /* Adjust this value based on the height of the fixed elements */
-        }
-
-        .sidebar .match {
-            display: flex;
-            align-items: center;
-            padding: 0.5rem 0;
             cursor: pointer;
         }
 
-        .sidebar .match img {
+        .header .left img {
             border-radius: 50%;
             width: 40px;
             height: 40px;
             margin-right: 1rem;
         }
 
-        .content {
-            margin-left: 300px;
-            padding: 2rem;
-            flex: 1;
-            overflow-y: auto;
+        .header .left .user-name {
+            font-size: 1.2rem;
+            font-weight: bold;
         }
 
-        .content h2 {
-            margin-bottom: 1.5rem;
+        .header .center {
+            display: flex;
+            gap: 2rem;
         }
 
-        .back-to-meeting {
-            padding: 1rem;
-            border-bottom: 1px solid #ccc;
-            cursor: pointer;
-            text-align: center;
-        }
-
-        .back-to-meeting:hover {
-            background-color: #f5f5f5;
-        }
-
-        .notification {
-            padding: 1rem;
-            border-bottom: 1px solid #ccc;
-            cursor: pointer;
-            text-align: center;
-        }
-
-        .notification:hover {
-            background-color: #f5f5f5;
-        }
-
-        .ai-suggestion-button {
-            background-color: #ff4b2b;
-            color: white;
-            border: none;
-            border-radius: 25px;
-            padding: 10px 20px;
-            cursor: pointer;
-            margin: 2rem auto;
-            display: block;
+        .header .center a {
+            text-decoration: none;
+            color: #333;
             font-size: 1rem;
-            transition: background-color 0.3s ease;
-            text-align: center;
-            width: 80%;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
         }
 
-        .ai-suggestion-button:hover {
-            background-color: #ff7e5f;
+        .header .center a .icon {
+            font-size: 1.2rem;
+        }
+
+        .header .right {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .header .right a {
+            text-decoration: none;
+            color: #333;
+            font-size: 1.2rem;
+        }
+
+        .content {
+            flex: 1;
+            padding: 2rem;
         }
 
         .grid-container {
@@ -184,91 +115,49 @@
             color: #ff4b2b;
         }
 
-        .header {
-            text-align: center;
-            padding: 0;
-            position: fixed;
-            top: 0;
-            left: 300px;
-            width: calc(100% - 300px);
-            background-color: #fff;
-            z-index: 1000;
-            box-shadow: 0 0 15px rgba(0, 0, 0, 0.1);
-        }
+        @media (max-width: 768px) {
+            .header .center {
+                gap: 1rem;
+            }
 
-        .header h1 {
-            margin: 0;
-            font-size: 2rem;
+            .header .center a {
+                font-size: 0.9rem;
+            }
+
+            .header .right a {
+                font-size: 1rem;
+            }
         }
     </style>
 </head>
 <body>
-    <div class="sidebar" id="sidebar">
-        <div class="sidebar-fixed" id="sidebar-content">
-            <div class="user-thumbnail" onclick="showUserMenu()">
-                <img src="{{ url_for('static', filename='uploads/' ~ user.photo) if user.photo else url_for('static', filename='placeholder.png') }}" alt="User Photo">
-                <span>{{ user.name }}</span>
-            </div>
-            <div id="menu-content">
-                {% if not request.path.startswith('/view_profile/') %}
-                <div id="meet" class="back-to-meeting">
-                    Back to meeting new people >
-                </div>
-                {% endif %}
-                {% if request.path != '/notifications' and notification_count and notification_count > 0 %}
-                <div class="notification" onclick="location.href='/notifications'">
-                    Checkout your ({{ notification_count }}) notifications
-                </div>
-                {% endif %}
-                <button class="ai-suggestion-button" onclick="location.href='/ai_suggestions'">✨Top AI Suggestions✨</button>
-                <div class="matches">
-                    <h4>Matched</h4>
-                    {% for match in matches %}
-                    <div class="match" onclick="location.href='/view_profile/{{ match.user_id }}'">
-                        <img src="{{ url_for('static', filename='uploads/' ~ match.photo) if match.photo else url_for('static', filename='placeholder.png') }}" alt="User Photo">
-                        <div>
-                            <p>{{ match.name }}</p>
-                            <p>{{ match.about_glimpse[:30] }}</p>
-                        </div>
-                    </div>
-                    {% endfor %}
-                </div>
-            </div>
+    <div class="header">
+        <div class="left" onclick="location.href='/view_profile/{{ user.id }}'">
+            <img src="{{ url_for('static', filename='uploads/' ~ user.photo) if user.photo else url_for('static', filename='placeholder.png') }}" alt="User Photo">
+            <span class="user-name">{{ user.name }}</span>
+        </div>
+        <div class="center">
+            <a href="/ai_suggestions">
+                <span class="icon">✨</span>
+                <span>AI Suggestions</span>
+            </a>
+            <a href="/matches">
+                <span class="icon">❤️</span>
+                <span>Matches</span>
+            </a>
+            <a href="/notifications">
+                <span class="icon">🔔</span>
+            </a>
+        </div>
+        <div class="right">
+            <a href="/settings">
+                <span class="icon">⚙️</span>
+            </a>
         </div>
     </div>
-    <div class="header">
-        <h1>Relatika</h1>
-    </div>
-    <div class="content" id="content">
+    <div class="content">
         {% block content %}
         {% endblock %}
     </div>
-
-    <script>
-        function showUserMenu() {
-            const sidebarContent = document.getElementById('sidebar-content');
-            sidebarContent.innerHTML = `
-                <div class="user-thumbnail" onclick="location.href='/view_profile/{{ user.id }}'">
-                    <img src="{{ url_for('static', filename='uploads/' ~ user.photo) if user.photo else url_for('static', filename='placeholder.png') }}" alt="User Photo">
-                    <span>{{ user.name }}</span>
-                </div>
-                <div class="menu">
-                    <li><a href="/view_profile/{{ user.id }}">View Profile</a></li>
-                    <li><a href="/profile">Edit Profile</a></li>
-                    <li><a href="/notifications">Notifications {% if notification_count and notification_count > 0 %} ({{ notification_count }}) {% endif %}</a></li>
-                    <li><a href="/contact_faqs">Contact and FAQs</a></li>
-                    <li><a href="/logout">Logout</a></li>
-                    <li><a href="/browse">Back</a></li>                        
-                </div>
-            `;
-        }
-        document.getElementById('meet').addEventListener('click', function() {
-            fetch(`/next_random_profile`)
-                .then(response => response.json())
-                .then(data => {
-                    window.location.href = `/view_profile/${data.user_id}`;
-                });
-        });
-    </script>
 </body>
 </html>

@@ -50,7 +50,10 @@
 
 <div class="notification-container">
     <h2>Notifications</h2>
-
+    {% if notification_count == 0 %}
+    <h3>None</h3>
+    {% endif %}
+    {% if notification_count %}
     <h3>Incoming</h3>
     <ul>
         {% for request in photo_reveals %}
@@ -86,6 +89,7 @@
             </li>
         {% endfor %}
     </ul>
+    {% endif %}
 </div>
 
 <script>

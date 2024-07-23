@@ -26,14 +26,14 @@
         {% endif %}
 
         {% if photo_reveal_status == 'none' and g.user['name'] != user_name %}
-        <button id="send-photo-reveal-request" class="action-button" data-user-id="{{ user_id }}">Send Reveal Request</button>
+        <button id="send-photo-reveal-request" class="action-button" data-user-id="{{ user_id }}">Send Photo Reveal Request</button>
         {% endif %}
         {% if photo_reveal_status == 'pending' and g.user['name'] != user_name %}
         <p class="status-message pending">Photo reveal request is pending...</p>
         {% endif %}
 
         {% if contact_share_status == 'none' and g.user['name'] != user_name %}
-        <button id="send-contact-share-request" class="action-button" data-user-id="{{ user_id }}">Send Contact Share Request</button>
+        <button id="send-contact-share-request" class="action-button" data-user-id="{{ user_id }}">Send Contact Reveal Request</button>
         {% endif %}
         {% if contact_share_status == 'pending' and g.user['name'] != user_name %}
         <p class="status-message pending">Contact share request is pending...</p>
@@ -46,14 +46,19 @@
         <p>Telegram: {{ user_telegram }}</p>
         {% endif %}
     </div>
+    {% if g.user['name'] != user_name %}
+    <div class="fixed-action-buttons">
+        <button id="dislike-button" class="action-button dislike">❌</button>
+        <button id="superlike-button" class="action-button superlike">Send Message</button>
+        <button id="like-button" class="action-button like">❤️</button>
+    </div>
+    {% else %}
+    <div class="edit-profile-button">
+        <a href="/profile" class="action-button">Edit Profile</a>
+    </div>
+    {% endif %}
 </div>
-{% if g.user['name'] != user_name %}
-<div class="fixed-action-buttons">
-    <button id="dislike-button" class="action-button dislike">❌</button>
-    <button id="superlike-button" class="action-button superlike">⭐</button>
-    <button id="like-button" class="action-button like">❤️</button>
-</div>
-{% endif %}
+
 <div id="superlike-popup" class="popup">
     <div class="popup-content">
         <span class="close-popup">&times;</span>
@@ -255,7 +260,7 @@ body {
 .fixed-action-buttons {
     position: fixed;
     bottom: 0;
-    left: 60%;
+    left: 50%;
     transform: translateX(-50%);
     display: flex;
     justify-content: space-around;
@@ -350,6 +355,18 @@ body {
 
 .status-message.pending {
     color: orange;
+}
+
+.edit-profile-button {
+    text-align: center;
+    margin-top: 1rem;
+}
+
+.edit-profile-button .action-button {
+    width: auto;
+    padding: 10px 20px;
+    border-radius: 5px;
+    font-size: 1rem;
 }
 </style>
 {% endblock %}

@@ -1,0 +1,48 @@
+{% extends "base.html" %}
+
+{% block content %}
+<style>
+    .settings-container {
+        max-width: 800px;
+        margin: 0 auto;
+        padding: 20px;
+        background-color: #f9f9f9;
+        border-radius: 10px;
+        box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+    }
+    .settings-container h2 {
+        color: #333;
+        margin-bottom: 20px;
+    }
+    .settings-container ul {
+        list-style-type: none;
+        padding: 0;
+    }
+    .settings-container li {
+        background-color: #fff;
+        margin: 10px 0;
+        padding: 15px;
+        border-radius: 5px;
+        box-shadow: 0 0 5px rgba(0, 0, 0, 0.1);
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+    .settings-container li a {
+        text-decoration: none;
+        color: #333;
+        width: 100%;
+    }
+</style>
+
+<div class="settings-container">
+    <h2>Settings</h2>
+    <ul>
+        <li><a href="/view_profile/{{ user.id }}">View Profile</a></li>
+        <li><a href="/profile">Edit Profile</a></li>
+        <li><a href="/notifications">Notifications</a></li>
+        <li><a href="/contact_faqs">Contact and FAQs</a></li>
+        <li><a href="/logout">Logout</a></li>
+    </ul>
+</div>
+{% endblock %}

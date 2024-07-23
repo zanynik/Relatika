@@ -1,100 +1,24 @@
 {% extends "base.html" %}
 {% block content %}
-<h2>Matches</h2>
-<div class="list-container">
+<h2>Your Matches</h2>
+<div class="grid-container">
     {% for match in matches %}
-    <div class="list-item" onclick="location.href='/view_profile/{{ match.user_id }}'">
-        <div class="profile-photo">
-            {% if match.photo %}
-            <img src="{{ url_for('static', filename='uploads/' ~ match.photo) }}" alt="User Photo" style="width:100px; height:100px;">
-            {% else %}
-            <img src="{{ url_for('static', filename='placeholder.png') }}" alt="Placeholder Photo" style="width:100px; height:100px;">
-            {% endif %}
-        </div>
-        <div class="profile-info">
-            <h3>{{ match.name }} (@<a href="{{ url_for('view_profile', user_id=match.user_id) }}">{{ match.username }}</a>)</h3>
-            <p>{{ match.about_glimpse }}</p>
-        </div>
-        <div class="match-info">
-            <h3>AI Match %</h3>
-            <p>{{ match.match_percentage }}%</p>
-        </div>
-        <div class="contact-info">
-            {% if match.email %}
-            <p>Email: {{ match.email[:1] }}*****{{ match.email[-1:] }}</p>
-            {% endif %}
-            {% if match.tel %}
-            <p>Tel: {{ match.tel[:1] }}*****{{ match.tel[-1:] }}</p>
-            {% endif %}
-        </div>
-        <div class="profile-actions">
-            <span class="bookmark {% if match.saved %}saved{% endif %}" data-profile-id="{{ match.user_id }}">&starf;</span>
+    <div class="grid-item">
+        <img src="{{ url_for('static', filename='uploads/' ~ match.photo) if match.photo else url_for('static', filename='placeholder.png') }}" alt="User Photo">
+        <h3>{{ match.name }}</h3>
+        <p class="ai-match">AI Match: {{ match.match_percentage }}%</p>
+        <p>Age: {{ match.age }}</p>
+        <p>Location: {{ match.location }}</p>
+        <h4>About</h4>
+        <p>{{ match.about_glimpse[:100] }}...</p>
+        <div class="photo-gallery">
+            {% for photo in match.photos %}
+            <div class="photo-container">
+                <img src="{{ url_for('static', filename='uploads/' ~ photo['filename']) }}" alt="User Photo" class="user-photo">
+            </div>
+            {% endfor %}
         </div>
     </div>
     {% endfor %}
 </div>
-<style>
-.list-container {
-    display: flex;
-    flex-direction: column;
-    gap: 10px;
-}
-.list-item {
-    display: flex;
-    align-items: center;
-    border: 1px solid #ccc;
-    padding: 10px;
-    border-radius: 5px;
-    background-color: #f9f9f9;
-    cursor: pointer;
-}
-.list-item:hover {
-    border: 2px solid olive;
-}
-.profile-photo img {
-    border-radius: 50%;
-    margin-right: 20px;
-}
-.profile-info {
-    flex: 1;
-}
-.match-info {
-    text-align: center;
-    color: olive;
-    font-size: larger;
-}
-.contact-info {
-    flex: 1;
-    text-align: right;
-}
-.profile-actions {
-    margin-left: auto;
-}
-.bookmark {
-    font-size: 24px;
-    cursor: pointer;
-}
-.bookmark.saved {
-    color: green;
-}
-</style>
-<script>
-document.querySelectorAll('.bookmark').forEach(bookmark => {
-    bookmark.addEventListener('click', function(event) {
-        event.stopPropagation();
-        const profileId = this.getAttribute('data-profile-id');
-        fetch(`/save_profile/${profileId}`, {
-            method: 'POST'
-        }).then(response => response.json()).then(data => {
-            if (data.status === 'success') {
-                this.classList.toggle('saved');
-            } else {
-                alert(data.message);
-            }
-        }).catch(error => {
-            console.error('Error:', error);
-        });
-    });
-});
-</script>
 {% endblock %}
