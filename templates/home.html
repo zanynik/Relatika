@@ -1,26 +1,131 @@
 {% extends "base_no_sidebar.html" %}
 {% block content %}
 <div class="home-container">
-    <h1>Welcome to Relatika</h1>
-    <h2>Your Personality-Based Dating App</h2>
-    <p>
-        This is a dating web app that matches users based on what they have written on their profiles. We use advanced LLM models to analyze thousands of profiles and find you the best matches. Say goodbye to superficial dating based solely on photos. At Relatika, we believe that beauty fades, but personality only grows.
-    </p>
-    <h3>Why Choose Relatika?</h3>
-    <ul>
-        <li><strong>Intelligent Matching:</strong> Our sophisticated algorithms ensure that you are paired with compatible partners based on your profile content.</li>
-        <li><strong>Personality First:</strong> We prioritize personality over looks, ensuring deeper and more meaningful connections.</li>
-        <li><strong>Privacy & Security:</strong> Your data and interactions are safe with us, providing you with a secure dating experience.</li>
-    </ul>
-    <h3>How It Works</h3>
-    <ol>
-        <li><strong>Create Your Profile:</strong> Share about yourself and what you're looking for in a partner.</li>
-        <li><strong>Find Matches:</strong> Our models analyze profiles to present you with the most compatible matches.</li>
-        <li><strong>Connect:</strong> Start conversations and build connections with like-minded individuals.</li>
-    </ol>
-    <h3>Join Us Today</h3>
-    <p>
-        Ready to find a compatible partner? <a href="/login">Login</a> or <a href="/register">Register</a> now and start your journey with Relatika. We hope you find and choose a good compatible person as your life partner.
-    </p>
+    <section class="welcome-section">
+        <h1>Welcome to Relatika</h1>
+        <h2>Your Personality-Based Dating App</h2>
+        <p>
+            Ready to find a compatible partner? <a href="/login">Login</a> or <a href="/register">Register</a> now and start your journey with Relatika. We hope you find and choose a good compatible person as your life partner.
+        </p>
+        <button onclick="location.href='/register'" class="cta-button">Join Now</button>
+        <div class="welcome-image">
+            <img src="{{ url_for('static', filename='images/couple1.jpg') }}" alt="Happy Couple">
+        </div>
+    </section>
+
+    <section class="about-section">
+        <h3>About Relatika</h3>
+        <p>
+            This is a dating web app that matches users based on what they have written on their profiles. We use advanced LLM models to analyze thousands of profiles and find you the best matches. Say goodbye to superficial dating based solely on photos. At Relatika, we believe that beauty fades, but personality only grows.
+        </p>
+        <div class="about-image">
+            <img src="{{ url_for('static', filename='images/couple2.jpg') }}" alt="Couple in Love">
+        </div>
+    </section>
+
+    <section class="how-it-works-section">
+        <h3>How It Works</h3>
+        <p>
+            Profiles are matched based on what you write in them using AI or LLM. Relatika is your personal dating secretary that browses through thousands of profiles and shortlists only the best for you to check and match if interested.
+        </p>
+        <ul>
+            <li>The AI revolution has made it possible for machines to read unimaginable amounts of text data and make sense of it. Why not use it to our advantage and try to make matches that are compatible with each other?</li>
+            <li>All you have to do is write about yourself and what you are looking for and let AI do the magic to shortlist user profiles for you. Find like-minded people, make meaningful connections.</li>
+            <li>Don't let a question bank of fixed 100 questions that everyone is given and an ancient matchmaking algorithm decide matches for you. Write freely about yourself, your dreams, your wishes, your goals, what makes you happy, sad, anxious, etc., and who you think your ideal partner could be or what you see you both doing together in the world? Write freely and we will get the AI secretary called "Relatika" to work for you to find this person.</li>
+            <li>In a sea of superficial dating apps which are only based on looks, Relatika comes as a breath of fresh air. We match users based on their personalities. The text of profiles is used by our LLM to match people. The photos are initially blurred and only revealed upon matching and hence sticking to our principle of non-superficial dating.</li>
+        </ul>
+        <div class="how-it-works-image">
+            <img src="{{ url_for('static', filename='images/friends1.jpg') }}" alt="Friends Having Fun">
+        </div>
+    </section>
+
+    <section class="connect-section">
+        <h3>Relatika: More Than Just Dating</h3>
+        <p>
+            Relatika is not just for dating. Find like-minded people and make meaningful connections. Form groups to discuss topics that matter to you, to play sports or to work on a hobby together. The magic of AI will bring together people like never before. Join us and use it for forming connections.
+        </p>
+        <div class="connect-image">
+            <img src="{{ url_for('static', filename='images/friends2.jpg') }}" alt="Group of Friends">
+        </div>
+    </section>
+
+    <section class="join-us-section">
+        <h3>Join Us Today</h3>
+        <p>
+            Ready to find a compatible partner? <a href="/login">Login</a> or <a href="/register">Register</a> now and start your journey with Relatika. We hope you find and choose a good compatible person as your life partner.
+        </p>
+        <div class="join-us-image">
+            <img src="{{ url_for('static', filename='images/couple3.jpg') }}" alt="Happy Couple Enjoying Time">
+        </div>
+    </section>
 </div>
+
+<style>
+    .home-container {
+        width: 100%;
+        padding: 20px;
+    }
+    .home-container section {
+        padding: 40px 0;
+        text-align: center;
+        background-color: #f9f9f9;
+        border-bottom: 1px solid #ccc;
+    }
+    .home-container section:nth-child(odd) {
+        background-color: #fff;
+    }
+    .welcome-section h1 {
+        font-size: 2.5rem;
+        margin-bottom: 20px;
+    }
+    .welcome-section h2 {
+        font-size: 1.8rem;
+        margin-bottom: 20px;
+    }
+    .welcome-section p {
+        font-size: 1.2rem;
+        margin-bottom: 30px;
+    }
+    .cta-button {
+        background-color: #ff4b2b;
+        color: white;
+        border: none;
+        border-radius: 25px;
+        padding: 10px 20px;
+        cursor: pointer;
+        font-size: 1rem;
+        transition: background-color 0.3s ease;
+    }
+    .cta-button:hover {
+        background-color: #ff7e5f;
+    }
+    h3 {
+        font-size: 2rem;
+        margin-bottom: 20px;
+    }
+    p, ul, ol {
+        font-size: 1.1rem;
+        line-height: 1.6;
+    }
+    ul {
+        list-style: disc;
+        padding-left: 20px;
+        text-align: left;
+    }
+    ol {
+        list-style: decimal;
+        padding-left: 20px;
+        text-align: left;
+    }
+    ul li, ol li {
+        margin-bottom: 10px;
+    }
+    .welcome-image img,
+    .about-image img,
+    .how-it-works-image img,
+    .connect-image img,
+    .join-us-image img {
+        width: 100%;
+    }
+</style>
 {% endblock %}

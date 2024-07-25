@@ -173,7 +173,7 @@ def login():
         if user and check_password_hash(user['password'], password):
             session['user_id'] = user['id']
             conn.close()
-            return redirect(url_for('browse'))
+            return redirect(url_for('ai_suggestions'))
         else:
             conn.close()
             error = 'Invalid username or password'
@@ -317,12 +317,14 @@ def delete_photo(filename):
 def next_random_profile():
     if 'user_id' not in session:
         return redirect(url_for('login'))
-    user_id = session['user_id']
-    conn = get_db_connection()
-    user = conn.execute('SELECT id FROM users WHERE id <> ? ORDER BY RANDOM() LIMIT 1', (user_id,)).fetchone()
-    conn.close()
     
-    return jsonify({'user_id': user['id']})
+    user_id = session['user_id']
+    
+    if 'matches' in g and isinstance(g.matches, list):
+        match_ids = [match['user_id'] for match in g.matches]
+        if match_ids:
+            random.shuffle(match_ids)
+            return jsonify({'user_id': match_ids[0]})
 
 @app.route('/send_superlike/<int:user_id>', methods=['POST'])
 def send_superlike(user_id):
