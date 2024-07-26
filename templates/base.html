@@ -4,160 +4,67 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Relatika</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+    <!-- Custom styles for this template -->
+    <link href="{{ url_for('static', filename='css/styles.css') }}" rel="stylesheet">
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Merriweather:wght@300;700&display=swap');
-
         body {
-            font-family: 'Merriweather', serif;
             margin: 0;
-            padding: 0;
+            padding-top: 56px; /* Ensure content is below the fixed navbar */
             background-color: #f9f9f9;
             color: #333;
-            display: flex;
-            flex-direction: column;
-            min-height: 100vh;
-        }
-
-        .header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 0.5rem 1rem;
-            background-color: #fff;
-            box-shadow: 0 0 15px rgba(0, 0, 0, 0.1);
-            position: sticky;
-            top: 0;
-            z-index: 1000;
-        }
-
-        .header .left {
-            display: flex;
-            align-items: center;
-            cursor: pointer;
-        }
-
-        .header .left img {
-            border-radius: 50%;
-            width: 40px;
-            height: 40px;
-            margin-right: 1rem;
-        }
-
-        .header .left .user-name {
-            font-size: 1.2rem;
-            font-weight: bold;
-        }
-
-        .header .center {
-            display: flex;
-            gap: 2rem;
-        }
-
-        .header .center a {
-            text-decoration: none;
-            color: #333;
-            font-size: 1rem;
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-        }
-
-        .header .center a .icon {
-            font-size: 1.2rem;
-        }
-
-        .header .right {
-            display: flex;
-            align-items: center;
-            gap: 1rem;
-        }
-
-        .header .right a {
-            text-decoration: none;
-            color: #333;
-            font-size: 1.2rem;
-        }
-
-        .content {
-            flex: 1;
-            padding: 2rem;
-        }
-
-        .grid-container {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
-            gap: 20px;
-        }
-
-        .grid-item {
-            background-color: #fff;
-            border-radius: 10px;
-            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
-            overflow: hidden;
-            text-align: center;
-            padding: 1rem;
-        }
-
-        .grid-item img {
-            width: 100%;
-            height: 200px;
-            object-fit: cover;
-            border-bottom: 1px solid #ccc;
-        }
-
-        .grid-item h3, .grid-item p {
-            margin: 10px 0;
-        }
-
-        .grid-item .ai-match {
-            font-size: 1.2rem;
-            color: #ff4b2b;
-        }
-
-        @media (max-width: 768px) {
-            .header .center {
-                gap: 1rem;
-            }
-
-            .header .center a {
-                font-size: 0.9rem;
-            }
-
-            .header .right a {
-                font-size: 1rem;
-            }
+            overflow-x: hidden; /* Prevent horizontal scrolling */
         }
     </style>
 </head>
 <body>
-    <div class="header">
-        <div class="left" onclick="location.href='/view_profile/{{ user.id }}'">
-            <img src="{{ url_for('static', filename='uploads/' ~ user.photo) if user.photo else url_for('static', filename='placeholder.png') }}" alt="User Photo">
-            <span class="user-name">{{ user.name }}</span>
+    <!-- Navigation -->
+    <nav class="navbar navbar-expand-lg navbar-dark navbar-custom fixed-top">
+        <div class="container">
+            <a class="navbar-brand" href="/">Relatika</a>
+            <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarResponsive" aria-controls="navbarResponsive" aria-expanded="false" aria-label="Toggle navigation">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarResponsive">
+                <ul class="navbar-nav ml-auto">
+                    {% if 'user_id' in session %}
+                        <li class="nav-item">
+                            <a class="nav-link" href="/profile">{{ session['user_name'] }}</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="/ai_suggestions">✨ AI Suggestions</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="/matches">❤️ Matches</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="/notifications">🔔 Notifications</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="/settings">⚙️ Settings</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="/logout">Logout</a>
+                        </li>
+                    {% else %}
+                        <li class="nav-item">
+                            <a class="nav-link" href="/login">Login</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="/register">Register</a>
+                        </li>
+                    {% endif %}
+                </ul>
+            </div>
         </div>
-        <div class="center">
-            <a href="/ai_suggestions">
-                <span class="icon">✨</span>
-                <span>AI Suggestions</span>
-            </a>
-            <a href="/matches">
-                <span class="icon">❤️</span>
-                <span>Matches</span>
-            </a>
-            <a href="/notifications">
-                <span class="icon">🔔</span>
-            </a>
-        </div>
-        <div class="right">
-            <a href="/settings">
-                <span class="icon">⚙️</span>
-            </a>
-        </div>
-    </div>
-    <div class="content">
+    </nav>
+
+    <!-- Page Content -->
+    <div class="container">
         {% block content %}
         {% endblock %}
     </div>
+
+    <!-- Custom JavaScript for this template -->
+    <script src="{{ url_for('static', filename='js/scripts.js') }}"></script>
 </body>
 </html>
